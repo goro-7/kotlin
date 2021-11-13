@@ -186,7 +186,7 @@ object FirKotlinToJvmBytecodeCompiler {
 
         val providerAndScopeForIncrementalCompilation = createComponentsForIncrementalCompilation(sourceScope)
 
-        providerAndScopeForIncrementalCompilation?.scope?.let {
+        providerAndScopeForIncrementalCompilation?.precompiledBinariesFileScope?.let {
             librariesScope -= it
         }
 
@@ -270,7 +270,7 @@ object FirKotlinToJvmBytecodeCompiler {
 
     private fun CompilationContext.createComponentsForIncrementalCompilation(
         sourceScope: AbstractProjectFileSearchScope
-    ): FirSessionFactory.ProviderAndScopeForIncrementalCompilation? {
+    ): FirSessionFactory.IncrementalCompilationContext? {
         if (targetIds == null || incrementalComponents == null) return null
         val directoryWithIncrementalPartsFromPreviousCompilation =
             moduleConfiguration[JVMConfigurationKeys.OUTPUT_DIRECTORY]
@@ -284,7 +284,7 @@ object FirKotlinToJvmBytecodeCompiler {
             projectEnvironment.getPackagePartProvider(sourceScope),
             targetIds.map(incrementalComponents::getIncrementalCache)
         )
-        return FirSessionFactory.ProviderAndScopeForIncrementalCompilation(packagePartProvider, incrementalCompilationScope)
+        return FirSessionFactory.IncrementalCompilationContext(emptyList(), packagePartProvider, incrementalCompilationScope)
     }
 
     private fun CompilationContext.runBackend(
@@ -364,7 +364,7 @@ object FirKotlinToJvmBytecodeCompiler {
     )
 }
 
-internal fun findMainClass(fir: List<FirFile>): FqName? {
+fun findMainClass(fir: List<FirFile>): FqName? {
     // TODO: replace with proper main function detector, KT-44557
     val compatibleClasses = mutableListOf<FqName>()
     val visitor = object : FirVisitorVoid() {

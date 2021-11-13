@@ -53,7 +53,7 @@ abstract class IncrementalCompilerRunner<
 ) {
 
     protected val cacheDirectory = File(workingDir, cacheDirName)
-    private val dirtySourcesSinceLastTimeFile = File(workingDir, DIRTY_SOURCES_FILE_NAME)
+    protected val dirtySourcesSinceLastTimeFile = File(workingDir, DIRTY_SOURCES_FILE_NAME)
     protected val lastBuildInfoFile = File(workingDir, LAST_BUILD_INFO_FILE_NAME)
     protected val abiSnapshotFile = File(workingDir, ABI_SNAPSHOT_FILE_NAME)
     protected open val kotlinSourceFilesExtensions: List<String> = DEFAULT_KOTLIN_SOURCE_FILES_EXTENSIONS
@@ -304,14 +304,16 @@ abstract class IncrementalCompilerRunner<
         }
 
     protected abstract fun runCompiler(
-        sourcesToCompile: Set<File>,
+        sourcesToCompile: List<File>,
         args: Args,
         caches: CacheManager,
         services: Services,
-        messageCollector: MessageCollector
-    ): ExitCode
+        messageCollector: MessageCollector,
+        allSources: List<File>,
+        isIncremental: Boolean
+    ): Pair<ExitCode, Collection<File>>
 
-    private fun compileIncrementally(
+    protected open fun compileIncrementally(
         args: Args,
         caches: CacheManager,
         allKotlinSources: List<File>,
@@ -327,12 +329,12 @@ abstract class IncrementalCompilerRunner<
         val dirtySources = when (compilationMode) {
             is CompilationMode.Incremental -> {
                 buildTimeMode = BuildTime.INCREMENTAL_ITERATION
-                compilationMode.dirtyFiles.toMutableList()
+                compilationMode.dirtyFiles.toMutableLinkedSet()
             }
             is CompilationMode.Rebuild -> {
                 buildTimeMode = BuildTime.NON_INCREMENTAL_ITERATION
                 reporter.addAttribute(compilationMode.reason)
-                allKotlinSources.toMutableList()
+                LinkedHashSet(allKotlinSources)
             }
         }
 
@@ -368,9 +370,17 @@ abstract class IncrementalCompilerRunner<
             val bufferingMessageCollector = BufferingMessageCollector()
             val messageCollectorAdapter = MessageCollectorToOutputItemsCollectorAdapter(bufferingMessageCollector, outputItemsCollector)
 
-            exitCode = reporter.measure(buildTimeMode) {
-                runCompiler(sourcesToCompile.toSet(), args, caches, services, messageCollectorAdapter)
+            val compiledSources = reporter.measure(buildTimeMode) {
+                runCompiler(
+                    sourcesToCompile, args, caches, services, messageCollectorAdapter,
+                    allKotlinSources, compilationMode is CompilationMode.Incremental
+                )
+            }.let { (ec, compiled) ->
+                exitCode = ec
+                compiled
             }
+
+            dirtySources.addAll(compiledSources)
 
             val generatedFiles = outputItemsCollector.outputs.map(SimpleOutputItem::toGeneratedFile)
             if (compilationMode is CompilationMode.Incremental) {
@@ -384,7 +394,7 @@ abstract class IncrementalCompilerRunner<
                 }
             }
 
-            reporter.reportCompileIteration(compilationMode is CompilationMode.Incremental, sourcesToCompile, exitCode)
+            reporter.reportCompileIteration(compilationMode is CompilationMode.Incremental, compiledSources, exitCode)
             bufferingMessageCollector.flush(originalMessageCollector)
 
             if (exitCode != ExitCode.OK) break

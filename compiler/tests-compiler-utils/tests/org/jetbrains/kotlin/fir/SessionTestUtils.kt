@@ -41,7 +41,7 @@ fun createSessionForTests(
     sourceScope,
     librariesScope,
     lookupTracker = null,
-    providerAndScopeForIncrementalCompilation = null,
+    incrementalCompilationContext = null,
     extensionRegistrars = emptyList(),
     dependenciesConfigurator = {
         friendDependencies(friendsPaths)
@@ -71,7 +71,7 @@ fun createSessionForTests(
         PsiBasedProjectFileSearchScope(sourceScope),
         PsiBasedProjectFileSearchScope(librariesScope),
         lookupTracker = null,
-        providerAndScopeForIncrementalCompilation = null,
+        incrementalCompilationContext = null,
         extensionRegistrars = emptyList(),
         dependenciesConfigurator = {
             friendDependencies(friendsPaths)
