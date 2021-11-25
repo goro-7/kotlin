@@ -31,8 +31,6 @@ abstract class FirRegisteredPluginAnnotations(val session: FirSession) : FirSess
 
     abstract fun getAnnotationsWithMetaAnnotation(metaAnnotation: AnnotationFqn): Collection<AnnotationFqn>
 
-    abstract fun registerUserDefinedAnnotation(metaAnnotation: AnnotationFqn, annotationClasses: Collection<FirRegularClass>)
-
     abstract fun getAnnotationsForPredicate(predicate: DeclarationPredicate): Set<AnnotationFqn>
 
     @PluginServicesInitialization
@@ -53,7 +51,7 @@ class FirRegisteredPluginAnnotationsImpl(session: FirSession) : FirRegisteredPlu
         return userDefinedAnnotations[metaAnnotation]
     }
 
-    override fun registerUserDefinedAnnotation(metaAnnotation: AnnotationFqn, annotationClasses: Collection<FirRegularClass>) {
+    fun registerUserDefinedAnnotation(metaAnnotation: AnnotationFqn, annotationClasses: Collection<FirRegularClass>) {
         require(annotationClasses.all { it.classKind == ClassKind.ANNOTATION_CLASS })
         val annotations = annotationClasses.map { it.symbol.classId.asSingleFqName() }
         this.annotations += annotations
