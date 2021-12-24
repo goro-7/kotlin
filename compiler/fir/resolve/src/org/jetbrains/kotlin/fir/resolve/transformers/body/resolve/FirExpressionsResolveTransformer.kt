@@ -313,9 +313,9 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
             dataFlowAnalyzer.enterSafeCallAfterNullCheck(safeCallExpression)
 
             safeCallExpression.apply {
-                checkedSubjectRef.value.propagateTypeFromOriginalReceiver(receiver, components.session)
+                checkedSubjectRef.value.propagateTypeFromOriginalReceiver(receiver, components.session, components.file)
                 transformSelector(this@FirExpressionsResolveTransformer, data)
-                propagateTypeFromQualifiedAccessAfterNullCheck(receiver, session)
+                propagateTypeFromQualifiedAccessAfterNullCheck(receiver, session, context.file)
             }
 
             dataFlowAnalyzer.exitSafeCall(safeCallExpression)
@@ -915,7 +915,7 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
                 if (typeRef != null) {
                     lhs.replaceTypeRef(
                         buildResolvedTypeRef { type = typeRef }.also {
-                            session.lookupTracker?.recordTypeResolveAsLookup(it, getClassCall.source, null)
+                            session.lookupTracker?.recordTypeResolveAsLookup(it, getClassCall.source, components.file.source)
                         }
                     )
                     typeRef
