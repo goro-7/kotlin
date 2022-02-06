@@ -58,6 +58,7 @@ internal class KtFirSymbolContainingDeclarationProvider(
                 KtSymbolOrigin.PROPERTY_BACKING_FIELD -> getContainingDeclarationForBackingFieldSymbol(symbol)
                 KtSymbolOrigin.INTERSECTION_OVERRIDE -> TODO()
                 KtSymbolOrigin.SAM_CONSTRUCTOR -> null
+                KtSymbolOrigin.PLUGIN -> null
                 KtSymbolOrigin.DELEGATED -> TODO()
             }
             else -> null
