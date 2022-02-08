@@ -36,7 +36,7 @@ object IrTree : AbstractTreeBuilder() {
 
     private val factory: SimpleFieldConfig = field("factory", type(Packages.declarations, "IrFactory"))
 
-    override val baseElement: ElementConfig by element(Other, name = "element") {
+    override val rootElement: ElementConfig by element(Other, name = "element") {
         transformByChildren = true
 
         parent(type(Packages.tree, "IrElementBase"))
@@ -63,7 +63,7 @@ object IrTree : AbstractTreeBuilder() {
         typeKind = TypeKind.Class
         transformByChildren = true
         transformerReturnType = statement
-        visitorParent = baseElement
+        visitorParent = rootElement
         visitorName = "declaration"
 
         parent(declaration)
@@ -348,7 +348,7 @@ object IrTree : AbstractTreeBuilder() {
         +field("setter", simpleFunction, mutable = true, nullable = true, isChild = true)
     }
     val moduleFragment: ElementConfig by element(Declaration) {
-        visitorParent = baseElement
+        visitorParent = rootElement
         transform = true
         transformByChildren = true
 
@@ -455,7 +455,7 @@ object IrTree : AbstractTreeBuilder() {
         +field("initializer", expression, nullable = true, mutable = true, isChild = true)
     }
     val packageFragment: ElementConfig by element(Declaration) {
-        visitorParent = baseElement
+        visitorParent = rootElement
         ownsChildren = false
 
         parent(declarationContainer)
@@ -489,7 +489,7 @@ object IrTree : AbstractTreeBuilder() {
     }
 
     val expression: ElementConfig by element(Expression) {
-        visitorParent = baseElement
+        visitorParent = rootElement
         transform = true
         transformByChildren = true
 
@@ -509,7 +509,7 @@ object IrTree : AbstractTreeBuilder() {
     }
     val body: ElementConfig by element(Expression) {
         transform = true
-        visitorParent = baseElement
+        visitorParent = rootElement
         visitorParam = "body"
         transformByChildren = true
     }
@@ -544,7 +544,7 @@ object IrTree : AbstractTreeBuilder() {
         suppressPrint = true //todo: generate this element too
         visitorParent = declarationReference
         visitorName = "memberAccess"
-        transformerReturnType = baseElement
+        transformerReturnType = rootElement
         val s = +param("S", symbolType)
 
         parent(declarationReference)
@@ -563,7 +563,7 @@ object IrTree : AbstractTreeBuilder() {
     val functionAccessExpression: ElementConfig by element(Expression) {
         visitorParent = memberAccessExpression
         visitorName = "functionAccess"
-        transformerReturnType = baseElement
+        transformerReturnType = rootElement
 
         parent(memberAccessExpression.withArgs("S" to functionSymbolType))
 
@@ -571,7 +571,7 @@ object IrTree : AbstractTreeBuilder() {
     }
     val constructorCall: ElementConfig by element(Expression) {
         visitorParent = functionAccessExpression
-        transformerReturnType = baseElement
+        transformerReturnType = rootElement
 
         parent(functionAccessExpression)
 
@@ -868,7 +868,7 @@ object IrTree : AbstractTreeBuilder() {
     }
     val functionExpression: ElementConfig by element(Expression) {
         visitorParent = expression
-        transformerReturnType = baseElement
+        transformerReturnType = rootElement
 
         parent(expression)
 
@@ -967,7 +967,7 @@ object IrTree : AbstractTreeBuilder() {
         +field("finallyExpression", expression, nullable = true, mutable = true, isChild = true)
     }
     val catch: ElementConfig by element(Expression) {
-        visitorParent = baseElement
+        visitorParent = rootElement
         visitorParam = "aCatch"
         transform = true
         transformByChildren = true
@@ -1018,7 +1018,7 @@ object IrTree : AbstractTreeBuilder() {
         +listField("elements", varargElement, mutability = List, isChild = true)
     }
     val spreadElement: ElementConfig by element(Expression) {
-        visitorParent = baseElement
+        visitorParent = rootElement
         visitorParam = "spread"
         transform = true
         transformByChildren = true
@@ -1036,7 +1036,7 @@ object IrTree : AbstractTreeBuilder() {
         +listField("branches", branch, mutability = List, isChild = true)
     }
     val branch: ElementConfig by element(Expression) {
-        visitorParent = baseElement
+        visitorParent = rootElement
         visitorParam = "branch"
         accept = true
         transform = true

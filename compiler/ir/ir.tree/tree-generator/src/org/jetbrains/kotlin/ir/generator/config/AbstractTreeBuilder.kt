@@ -16,7 +16,7 @@ import kotlin.reflect.KProperty
 abstract class AbstractTreeBuilder {
     private val configurationCallbacks = mutableListOf<() -> ElementConfig>()
 
-    abstract val baseElement: ElementConfig
+    abstract val rootElement: ElementConfig
     abstract val abstractElement: ElementConfig
 
     fun element(category: ElementConfig.Category, name: String? = null, initializer: ElementConfig.() -> Unit = {}): ElementConfigDel {
@@ -67,7 +67,7 @@ abstract class AbstractTreeBuilder {
 
     fun build(): Config {
         val elements = configurationCallbacks.map { it() }
-        return Config(elements, baseElement, abstractElement)
+        return Config(elements, rootElement, abstractElement)
     }
 
     companion object {

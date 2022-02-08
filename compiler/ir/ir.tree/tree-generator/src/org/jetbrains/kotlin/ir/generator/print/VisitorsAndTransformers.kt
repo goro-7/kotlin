@@ -30,7 +30,7 @@ fun printVisitor(generationPath: File, model: Model): GeneratedFile {
             returns(r)
         }
 
-        addFunction(buildVisitFun(model.baseElement).addModifiers(KModifier.ABSTRACT).build())
+        addFunction(buildVisitFun(model.rootElement).addModifiers(KModifier.ABSTRACT).build())
 
         for (element in model.elements) {
             element.visitorParent?.let { parent ->
@@ -61,8 +61,8 @@ fun printVisitorVoid(generationPath: File, model: Model): GeneratedFile {
             addParameter(element.visitorParam, element.toPoetStarParameterized())
         }
 
-        addFunction(buildVisitFun(model.baseElement).build())
-        addFunction(buildVisitVoidFun(model.baseElement).build())
+        addFunction(buildVisitFun(model.rootElement).build())
+        addFunction(buildVisitVoidFun(model.rootElement).build())
 
         for (element in model.elements) {
             element.visitorParent?.let { parent ->
@@ -82,7 +82,7 @@ fun printTransformer(generationPath: File, model: Model): GeneratedFile {
         val d = TypeVariableName("D", KModifier.IN)
         addTypeVariable(d)
 
-        addSuperinterface(visitorTypeName.parameterizedBy(model.baseElement.toPoetStarParameterized(), d))
+        addSuperinterface(visitorTypeName.parameterizedBy(model.rootElement.toPoetStarParameterized(), d))
 
         fun buildVisitFun(element: Element) = FunSpec.builder(element.visitFunName).apply {
             addModifiers(KModifier.OVERRIDE)

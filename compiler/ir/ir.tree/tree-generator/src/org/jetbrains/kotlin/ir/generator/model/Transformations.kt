@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.partitionIsInstance
 
 private object InferredOverriddenType : TypeRef
 
-data class Model(val elements: List<Element>, val baseElement: Element, val abstractElement: Element)
+data class Model(val elements: List<Element>, val rootElement: Element, val abstractElement: Element)
 
 fun config2model(config: Config): Model {
     val ec2el = mutableMapOf<ElementConfig, Element>()
@@ -63,7 +63,7 @@ fun config2model(config: Config): Model {
         element
     }
 
-    val (baseElement, abstractElement) = replaceElementRefs(config, ec2el)
+    val (rootElement, abstractElement) = replaceElementRefs(config, ec2el)
     setTypeKinds(elements)
     addAbstractElement(elements, abstractElement)
     markLeaves(elements)
@@ -71,10 +71,10 @@ fun config2model(config: Config): Model {
     processFieldOverrides(elements)
     addWalkableChildren(elements)
 
-    return Model(elements, baseElement, abstractElement)
+    return Model(elements, rootElement, abstractElement)
 }
 
-private data class SpecialElements(val baseElement: Element, val abstractElement: Element)
+private data class SpecialElements(val rootElement: Element, val abstractElement: Element)
 
 private fun replaceElementRefs(config: Config, mapping: Map<ElementConfig, Element>): SpecialElements {
     val visited = mutableMapOf<TypeRef, TypeRef>()
@@ -101,7 +101,7 @@ private fun replaceElementRefs(config: Config, mapping: Map<ElementConfig, Eleme
         }.also { visited[type] = it }
     }
 
-    val baseEl = transform(config.baseElement) as ElementRef
+    val rootEl = transform(config.rootElement) as ElementRef
     val absEl = transform(config.abstractElement) as ElementRef
 
     for (ec in config.elements) {
@@ -109,7 +109,7 @@ private fun replaceElementRefs(config: Config, mapping: Map<ElementConfig, Eleme
         val (elParents, otherParents) = ec.parents
             .map { transform(it) }
             .partitionIsInstance<TypeRef, ElementRef>()
-        el.elementParents = elParents.takeIf { it.isNotEmpty() || el == baseEl.element } ?: listOf(baseEl)
+        el.elementParents = elParents.takeIf { it.isNotEmpty() || el == rootEl.element } ?: listOf(rootEl)
         el.otherParents = otherParents.castAll<ClassRef<*>>().toList()
         el.visitorParent = ec.visitorParent?.let(::transform) as ElementRef?
         el.transformerReturnType = (ec.transformerReturnType?.let(::transform) as ElementRef?)?.element
@@ -126,7 +126,7 @@ private fun replaceElementRefs(config: Config, mapping: Map<ElementConfig, Eleme
         }
     }
 
-    return SpecialElements(baseEl.element, absEl.element)
+    return SpecialElements(rootEl.element, absEl.element)
 }
 
 private fun markLeaves(elements: List<Element>) {

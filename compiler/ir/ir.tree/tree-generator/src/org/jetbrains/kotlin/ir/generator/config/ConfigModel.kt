@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.ir.generator.util.*
 
 class Config(
     val elements: List<ElementConfig>,
-    val baseElement: ElementConfig,
+    val rootElement: ElementConfig,
     val abstractElement: ElementConfig,
 )
 
