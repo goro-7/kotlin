@@ -71,10 +71,10 @@ fun printElements(generationPath: File, model: Model) = sequence {
                 }.build())
             }
 
+            val isRootElement = element.elementParents.isEmpty()
             if (element.accept) {
-                assert(element.visitorParent != null)
                 addFunction(FunSpec.builder("accept").apply {
-                    addModifiers(KModifier.OVERRIDE)
+                    addModifiers(if (isRootElement) KModifier.ABSTRACT else KModifier.OVERRIDE)
                     val r = TypeVariableName("R")
                     val d = TypeVariableName("D")
                     addTypeVariable(r)
@@ -82,26 +82,29 @@ fun printElements(generationPath: File, model: Model) = sequence {
                     addParameter("visitor", elementVisitorType.toPoet().tryParameterizedBy(r, d))
                     addParameter("data", d)
                     returns(r)
-                    addStatement("return visitor.${element.visitFunName}(this, data)")
+                    if (!isRootElement) {
+                        addStatement("return visitor.${element.visitFunName}(this, data)")
+                    }
                 }.build())
             }
 
             if (element.transform) {
-                assert(element.visitorParent != null)
                 addFunction(FunSpec.builder("transform").apply {
-                    addModifiers(KModifier.OVERRIDE)
+                    addModifiers(if (isRootElement) KModifier.ABSTRACT else KModifier.OVERRIDE)
                     val d = TypeVariableName("D")
                     addTypeVariable(d)
                     addParameter("transformer", elementTransformerType.toPoet().tryParameterizedBy(d))
                     addParameter("data", d)
                     returns(selfParametrizedElementName)
-                    addStatement("return accept(transformer, data) as %T", selfParametrizedElementName)
+                    if (!isRootElement) {
+                        addStatement("return accept(transformer, data) as %T", selfParametrizedElementName)
+                    }
                 }.build())
             }
 
-            if (element.ownsChildren && element.walkableChildren.isNotEmpty()) {
+            if (element.ownsChildren && (isRootElement || element.walkableChildren.isNotEmpty())) {
                 addFunction(FunSpec.builder("acceptChildren").apply {
-                    addModifiers(KModifier.OVERRIDE)
+                    addModifiers(if (isRootElement) KModifier.ABSTRACT else KModifier.OVERRIDE)
                     val d = TypeVariableName("D")
                     addTypeVariable(d)
                     addParameter("visitor", elementVisitorType.toPoet().tryParameterizedBy(UNIT, d))
@@ -120,9 +123,9 @@ fun printElements(generationPath: File, model: Model) = sequence {
                 }.build())
             }
 
-            if (element.ownsChildren && element.transformableChildren.isNotEmpty()) {
+            if (element.ownsChildren && (isRootElement || element.transformableChildren.isNotEmpty())) {
                 addFunction(FunSpec.builder("transformChildren").apply {
-                    addModifiers(KModifier.OVERRIDE)
+                    addModifiers(if (isRootElement) KModifier.ABSTRACT else KModifier.OVERRIDE)
                     val d = TypeVariableName("D")
                     addTypeVariable(d)
                     addParameter("transformer", elementTransformerType.toPoet().tryParameterizedBy(d))

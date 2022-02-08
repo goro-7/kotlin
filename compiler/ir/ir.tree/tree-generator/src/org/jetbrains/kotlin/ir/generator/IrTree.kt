@@ -37,9 +37,9 @@ object IrTree : AbstractTreeBuilder() {
     private val factory: SimpleFieldConfig = field("factory", type(Packages.declarations, "IrFactory"))
 
     override val rootElement: ElementConfig by element(Other, name = "element") {
+        accept = true
+        transform = true
         transformByChildren = true
-
-        parent(type(Packages.tree, "IrElementBase"))
 
         +field("startOffset", int)
         +field("endOffset", int)
