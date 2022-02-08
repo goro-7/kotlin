@@ -8,8 +8,10 @@ package org.jetbrains.kotlin.ir.generator
 import org.jetbrains.kotlin.ir.generator.Packages.declarations
 import org.jetbrains.kotlin.ir.generator.Packages.exprs
 import org.jetbrains.kotlin.ir.generator.Packages.symbols
+import org.jetbrains.kotlin.ir.generator.Packages.tree
 import org.jetbrains.kotlin.ir.generator.Packages.types
 import org.jetbrains.kotlin.ir.generator.Packages.visitors
+import org.jetbrains.kotlin.ir.generator.util.TypeKind
 import org.jetbrains.kotlin.ir.generator.util.type
 
 object Packages {
@@ -23,6 +25,7 @@ object Packages {
     val descriptors = "org.jetbrains.kotlin.descriptors"
 }
 
+val abstractElementType = type(tree, "IrAbstractElement", TypeKind.Class)
 val statementOriginType = type(exprs, "IrStatementOrigin")
 val elementVisitorType = type(visitors, "IrElementVisitor")
 val elementTransformerType = type(visitors, "IrElementTransformer")

@@ -44,9 +44,6 @@ object IrTree : AbstractTreeBuilder() {
         +field("startOffset", int)
         +field("endOffset", int)
     }
-    override val abstractElement: ElementConfig by element(Other) {
-        typeKind = TypeKind.Class
-    }
     val statement: ElementConfig by element(Other)
 
     val declaration: ElementConfig by element(Declaration) {

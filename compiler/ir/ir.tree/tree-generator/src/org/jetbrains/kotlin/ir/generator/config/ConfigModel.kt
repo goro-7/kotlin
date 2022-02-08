@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.ir.generator.util.*
 class Config(
     val elements: List<ElementConfig>,
     val rootElement: ElementConfig,
-    val abstractElement: ElementConfig,
 )
 
 class ElementConfig(
@@ -57,12 +56,12 @@ class ElementConfig(
 
     override fun toString() = element.name
 
-    enum class Category(val packageDir: String, val defaultVisitorParam: String) {
+    enum class Category(private val packageDir: String, val defaultVisitorParam: String) {
         Expression("expressions", "expression"),
         Declaration("declarations", "declaration"),
         Other("", "element");
 
-        val packageName get() = "$BASE_PACKAGE.$packageDir"
+        val packageName: String get() = BASE_PACKAGE + if (packageDir.isNotEmpty()) ".$packageDir" else ""
     }
 }
 

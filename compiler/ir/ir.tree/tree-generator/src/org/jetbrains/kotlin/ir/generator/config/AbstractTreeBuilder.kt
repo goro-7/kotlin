@@ -17,7 +17,6 @@ abstract class AbstractTreeBuilder {
     private val configurationCallbacks = mutableListOf<() -> ElementConfig>()
 
     abstract val rootElement: ElementConfig
-    abstract val abstractElement: ElementConfig
 
     fun element(category: ElementConfig.Category, name: String? = null, initializer: ElementConfig.() -> Unit = {}): ElementConfigDel {
         val del = ElementConfigDel(category, name)
@@ -67,7 +66,7 @@ abstract class AbstractTreeBuilder {
 
     fun build(): Config {
         val elements = configurationCallbacks.map { it() }
-        return Config(elements, rootElement, abstractElement)
+        return Config(elements, rootElement)
     }
 
     companion object {

@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.ir.generator.model
 
+import org.jetbrains.kotlin.ir.generator.abstractElementType
 import org.jetbrains.kotlin.ir.generator.config.*
 import org.jetbrains.kotlin.ir.generator.util.*
 import org.jetbrains.kotlin.utils.addToStdlib.castAll
@@ -12,7 +13,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.partitionIsInstance
 
 private object InferredOverriddenType : TypeRef
 
-data class Model(val elements: List<Element>, val rootElement: Element, val abstractElement: Element)
+data class Model(val elements: List<Element>, val rootElement: Element)
 
 fun config2model(config: Config): Model {
     val ec2el = mutableMapOf<ElementConfig, Element>()
@@ -63,20 +64,18 @@ fun config2model(config: Config): Model {
         element
     }
 
-    val (rootElement, abstractElement) = replaceElementRefs(config, ec2el)
+    val rootElement = replaceElementRefs(config, ec2el)
     setTypeKinds(elements)
-    addAbstractElement(elements, abstractElement)
+    addAbstractElement(elements)
     markLeaves(elements)
     configureDescriptorApiAnnotation(elements)
     processFieldOverrides(elements)
     addWalkableChildren(elements)
 
-    return Model(elements, rootElement, abstractElement)
+    return Model(elements, rootElement)
 }
 
-private data class SpecialElements(val rootElement: Element, val abstractElement: Element)
-
-private fun replaceElementRefs(config: Config, mapping: Map<ElementConfig, Element>): SpecialElements {
+private fun replaceElementRefs(config: Config, mapping: Map<ElementConfig, Element>): Element {
     val visited = mutableMapOf<TypeRef, TypeRef>()
 
     fun transform(type: TypeRef): TypeRef {
@@ -102,7 +101,6 @@ private fun replaceElementRefs(config: Config, mapping: Map<ElementConfig, Eleme
     }
 
     val rootEl = transform(config.rootElement) as ElementRef
-    val absEl = transform(config.abstractElement) as ElementRef
 
     for (ec in config.elements) {
         val el = mapping[ec.element]!!
@@ -126,7 +124,7 @@ private fun replaceElementRefs(config: Config, mapping: Map<ElementConfig, Eleme
         }
     }
 
-    return SpecialElements(rootEl.element, absEl.element)
+    return rootEl.element
 }
 
 private fun markLeaves(elements: List<Element>) {
@@ -173,14 +171,10 @@ private fun setTypeKinds(elements: List<Element>) {
     }
 }
 
-private fun addAbstractElement(elements: List<Element>, abstractElement: Element) {
+private fun addAbstractElement(elements: List<Element>) {
     for (el in elements) {
-        if (el == abstractElement) {
-            continue
-        }
-
         if (el.kind!!.typeKind == TypeKind.Class && el.elementParents.none { it.element.kind!!.typeKind == TypeKind.Class }) {
-            el.elementParents += ElementRef(abstractElement)
+            el.otherParents += abstractElementType
         }
     }
 }
