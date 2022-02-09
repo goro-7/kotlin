@@ -5,7 +5,7 @@
 
 package org.jetbrains.kotlin.ir.generator.model
 
-import org.jetbrains.kotlin.ir.generator.abstractElementType
+import org.jetbrains.kotlin.ir.generator.elementBaseType
 import org.jetbrains.kotlin.ir.generator.config.*
 import org.jetbrains.kotlin.ir.generator.util.*
 import org.jetbrains.kotlin.utils.addToStdlib.castAll
@@ -174,7 +174,7 @@ private fun setTypeKinds(elements: List<Element>) {
 private fun addAbstractElement(elements: List<Element>) {
     for (el in elements) {
         if (el.kind!!.typeKind == TypeKind.Class && el.elementParents.none { it.element.kind!!.typeKind == TypeKind.Class }) {
-            el.otherParents += abstractElementType
+            el.otherParents += elementBaseType
         }
     }
 }

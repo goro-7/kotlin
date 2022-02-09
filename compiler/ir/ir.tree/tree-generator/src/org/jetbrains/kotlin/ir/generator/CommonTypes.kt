@@ -25,7 +25,7 @@ object Packages {
     val descriptors = "org.jetbrains.kotlin.descriptors"
 }
 
-val abstractElementType = type(tree, "IrAbstractElement", TypeKind.Class)
+val elementBaseType = type(tree, "IrElementBase", TypeKind.Class)
 val statementOriginType = type(exprs, "IrStatementOrigin")
 val elementVisitorType = type(visitors, "IrElementVisitor")
 val elementTransformerType = type(visitors, "IrElementTransformer")
