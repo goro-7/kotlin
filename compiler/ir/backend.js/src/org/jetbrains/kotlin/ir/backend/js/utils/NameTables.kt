@@ -119,6 +119,17 @@ fun jsFunctionSignature(declaration: IrFunction, context: JsIrBackendContext): S
         return declarationName
     }
 
+    if (declaration is IrSimpleFunction && declaration.correspondingPropertySymbol != null) {
+        val property = declaration.correspondingPropertySymbol!!.owner
+        val name = property.getJsNameOrKotlinName().asString()
+        val prefix = when(declaration) {
+            property.getter -> "get_"
+            property.setter -> "set_"
+            else -> error("")
+        }
+        return sanitizeName(prefix + name) + RESERVED_MEMBER_NAME_SUFFIX
+    }
+
     val nameBuilder = StringBuilder()
     nameBuilder.append(declarationName)
 
@@ -139,7 +150,7 @@ fun jsFunctionSignature(declaration: IrFunction, context: JsIrBackendContext): S
     val signature = nameBuilder.toString()
 
     // TODO: Use better hashCode
-    return sanitizeName(declarationName) + "_" + abs(signature.hashCode()).toString(Character.MAX_RADIX) + RESERVED_MEMBER_NAME_SUFFIX
+    return sanitizeName(declarationName, withHash = false) + "_" + abs(signature.hashCode()).toString(Character.MAX_RADIX) + RESERVED_MEMBER_NAME_SUFFIX
 }
 
 class NameTables(
@@ -393,7 +404,7 @@ fun sanitizeName(name: String, withHash: Boolean = true): String {
     }
 
     return if (withHash) {
-        "${builder}_${name.hashCode().toUInt()}"
+        "${builder}_${abs(name.hashCode()).toString(Character.MAX_RADIX)}"
     } else {
         builder.toString()
     }
