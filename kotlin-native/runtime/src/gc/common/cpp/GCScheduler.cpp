@@ -132,7 +132,7 @@ private:
     HeapGrowthController heapGrowthController_;
     RegularIntervalPacer regularIntervalPacer_;
     std::function<void()> scheduleGC_;
-    RepeatedTimer timer_;
+    RepeatedTimer<> timer_;
 };
 
 #endif // !KONAN_NO_THREADS

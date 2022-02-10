@@ -12,12 +12,14 @@
 #include <mutex>
 #include <string_view>
 
+#include "Clock.hpp"
 #include "KAssert.h"
 #include "ScopedThread.hpp"
 #include "Utils.hpp"
 
 namespace kotlin {
 
+template <typename Clock = steady_clock>
 class RepeatedTimer : private Pinned {
 public:
     template <typename Rep, typename Period, typename F>
@@ -42,7 +44,7 @@ private:
     void Run(std::chrono::duration<Rep, Period> interval, F f) noexcept {
         while (true) {
             std::unique_lock lock(mutex_);
-            if (wait_.wait_for(lock, interval, [this]() noexcept { return !run_; })) {
+            if (Clock::wait_for(wait_, lock, interval, [this]() noexcept { return !run_; })) {
                 RuntimeAssert(!run_, "Can only happen once run_ is set to false");
                 return;
             }

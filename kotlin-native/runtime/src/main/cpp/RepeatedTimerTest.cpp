@@ -70,3 +70,14 @@ TEST(RepeatedTimerTest, AdjustInterval) {
     // After we've slept for 10ms, we still haven't executed the function another time.
     EXPECT_THAT(counter.load(), 2);
 }
+
+TEST(RepeatedTimerTest, InfiniteInterval) {
+    constexpr auto infinite = std::chrono::milliseconds::max();
+    std::atomic<int> counter = 0;
+    RepeatedTimer timer(infinite, [&counter, infinite]() {
+        ++counter;
+        return infinite;
+    });
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    EXPECT_THAT(counter.load(), 0);
+}
