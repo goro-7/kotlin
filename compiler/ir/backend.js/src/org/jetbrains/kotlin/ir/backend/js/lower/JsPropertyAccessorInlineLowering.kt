@@ -20,23 +20,23 @@ class JsPropertyAccessorInlineLowering(
         if (!isSafeToInlineInClosedWorld())
             return false
 
-        if (isConst) {
-            // TODO: teach the deserializer to load constant property initializers
-            if (context.icCompatibleIr2Js) {
-                val accessFile = accessContainer.fileOrNull ?: return false
-                val file = fileOrNull ?: return false
+        if (!isTopLevel) return true
 
-                return accessFile == file
-            }
+        // TODO: teach the deserializer to load constant property initializers
+        if (context.icCompatibleIr2Js) {
+            val accessFile = accessContainer.fileOrNull ?: return false
+            val file = fileOrNull ?: return false
 
-            return true
+            return accessFile == file
         }
+
+        if (isConst)
+            return true
 
         return when (context.granularity) {
             JsGenerationGranularity.WHOLE_PROGRAM ->
                 true
             JsGenerationGranularity.PER_MODULE -> {
-                if (!isTopLevel) return true
                 val accessModule = accessContainer.fileOrNull?.module ?: return false
                 val module = fileOrNull?.module ?: return false
                 accessModule == module
