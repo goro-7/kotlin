@@ -387,10 +387,7 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
     }
 
     private fun generateInterfaceId(): JsPropertyInitializer {
-        return JsPropertyInitializer(
-            JsNameRef(Namer.METADATA_INTERFACE_ID),
-            JsIntLiteral(irClass.hashCode())
-        )
+        return JsPropertyInitializer(JsNameRef(Namer.METADATA_INTERFACE_ID), JsIntLiteral(-1))
     }
 
     private fun generateSuperClasses(): List<JsPropertyInitializer> {
@@ -417,11 +414,7 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
                 JsObjectLiteral().apply {
                     propertyInitializers += JsPropertyInitializer(
                         JsNameRef(Namer.METADATA_IS_INTERFACE_MEMO),
-                        JsObjectLiteral().apply {
-                            propertyInitializers += parentSymbols.map {
-                                JsPropertyInitializer(JsIntLiteral(it.owner.hashCode()), JsBooleanLiteral(true))
-                            }
-                        }
+                        JsObjectLiteral()
                     )
                     propertyInitializers += JsPropertyInitializer(
                         JsNameRef(Namer.METADATA_MEMO_IS_COMPLETE),
