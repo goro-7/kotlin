@@ -499,6 +499,7 @@ allprojects {
             if (useJvmFir && this@allprojects.path !in projectsWithDisabledFirBootstrap) {
                 freeCompilerArgs += "-Xuse-fir"
                 freeCompilerArgs += "-Xabi-stability=stable"
+                freeCompilerArgs += "-Xrender-internal-diagnostic-names"
             }
         }
     }
