@@ -66,16 +66,14 @@ public:
     }
 
     template <typename Lock, typename Rep, typename Period, typename F>
-    static bool wait_for(
-            std::condition_variable_any& cv, Lock& lock, std::chrono::duration<Rep, Period> interval, F&& f) {
+    static bool wait_for(std::condition_variable_any& cv, Lock& lock, std::chrono::duration<Rep, Period> interval, F&& f) {
         // Not using cv.wait_for, because it may mishandle "infinite" intervals. Use saturating arithmetics to address this.
         auto until = now() + interval;
         return wait_until(cv, lock, until, std::forward<F>(f));
     }
 
     template <typename Lock, typename Duration, typename F>
-    static bool wait_until(
-            std::condition_variable_any& cv, Lock& lock, std::chrono::time_point<steady_clock, Duration> until, F&& f) {
+    static bool wait_until(std::condition_variable_any& cv, Lock& lock, std::chrono::time_point<steady_clock, Duration> until, F&& f) {
         // Shield standard library from saturating types.
         auto untilNonSat = std::chrono::time_point<std::chrono::steady_clock>(until.time_since_epoch());
         return cv.wait_until(lock, untilNonSat, std::forward<F>(f));
@@ -158,15 +156,13 @@ public:
     }
 
     template <typename Lock, typename Rep, typename Period, typename F>
-    static bool wait_for(
-            std::condition_variable_any& cv, Lock& lock, std::chrono::duration<Rep, Period> interval, F&& f) {
+    static bool wait_for(std::condition_variable_any& cv, Lock& lock, std::chrono::duration<Rep, Period> interval, F&& f) {
         auto until = now() + interval;
         return wait_until(cv, lock, until, std::forward<F>(f));
     }
 
     template <typename Lock, typename Duration, typename F>
-    static bool wait_until(
-            std::condition_variable_any& cv, Lock& lock, std::chrono::time_point<manual_clock, Duration> until, F&& f) {
+    static bool wait_until(std::condition_variable_any& cv, Lock& lock, std::chrono::time_point<manual_clock, Duration> until, F&& f) {
         while (true) {
             if (now_.load() >= until) {
                 return false;
@@ -180,15 +176,13 @@ public:
     }
 
     template <typename T, typename Rep, typename Period>
-    static std::future_status wait_for(
-            std::future<T>& future, std::chrono::duration<Rep, Period> interval) {
+    static std::future_status wait_for(std::future<T>& future, std::chrono::duration<Rep, Period> interval) {
         auto until = now() + interval;
         return wait_until(future, until);
     }
 
     template <typename T, typename Duration>
-    static std::future_status wait_until(
-            std::future<T>& future, std::chrono::time_point<manual_clock, Duration> until) {
+    static std::future_status wait_until(std::future<T>& future, std::chrono::time_point<manual_clock, Duration> until) {
         while (true) {
             if (now_.load() >= until) {
                 return std::future_status::timeout;
@@ -202,15 +196,13 @@ public:
     }
 
     template <typename T, typename Rep, typename Period>
-    static std::future_status wait_for(
-            std::shared_future<T>& future, std::chrono::duration<Rep, Period> interval) {
+    static std::future_status wait_for(std::shared_future<T>& future, std::chrono::duration<Rep, Period> interval) {
         auto until = now() + interval;
         return wait_until(future, until);
     }
 
     template <typename T, typename Duration>
-    static std::future_status wait_until(
-            std::shared_future<T>& future, std::chrono::time_point<manual_clock, Duration> until) {
+    static std::future_status wait_until(std::shared_future<T>& future, std::chrono::time_point<manual_clock, Duration> until) {
         while (true) {
             if (now_.load() >= until) {
                 return std::future_status::timeout;
@@ -227,6 +219,6 @@ private:
     static std::atomic<time_point> now_;
 };
 
-}
+} // namespace test_support
 
 } // namespace kotlin

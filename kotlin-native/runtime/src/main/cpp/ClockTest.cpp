@@ -33,7 +33,7 @@ public:
     }
 };
 
-}
+} // namespace
 
 template <typename T>
 class ClockTest : public testing::Test {};
@@ -63,7 +63,8 @@ TYPED_TEST(ClockTest, CVWaitFor_OK) {
     bool ok = false;
     std::atomic<bool> go = false;
     ScopedThread thread([&] {
-        while (!go.load()) {}
+        while (!go.load()) {
+        }
         {
             std::unique_lock guard(m);
             ok = true;
@@ -85,7 +86,8 @@ TYPED_TEST(ClockTest, CVWaitFor_Timeout) {
     std::mutex m;
     std::atomic<bool> go = false;
     ScopedThread thread([&] {
-        while (!go.load()) {}
+        while (!go.load()) {
+        }
         TypeParam::sleep_for(interval);
     });
     std::unique_lock guard(m);
@@ -103,7 +105,8 @@ TYPED_TEST(ClockTest, CVWaitFor_InfiniteTimeout) {
     bool ok = false;
     std::atomic<bool> go = false;
     ScopedThread thread([&] {
-        while (!go.load()) {}
+        while (!go.load()) {
+        }
         // Wait to see if `TypeParam::wait_for` wakes up from timeout.
         TypeParam::sleep_for(milliseconds(1));
         {
@@ -124,7 +127,8 @@ TYPED_TEST(ClockTest, CVWaitUntil_OK) {
     bool ok = false;
     std::atomic<bool> go = false;
     ScopedThread thread([&] {
-        while (!go.load()) {}
+        while (!go.load()) {
+        }
         {
             std::unique_lock guard(m);
             ok = true;
@@ -146,7 +150,8 @@ TYPED_TEST(ClockTest, CVWaitUntil_Timeout) {
     std::mutex m;
     std::atomic<bool> go = false;
     ScopedThread thread([&] {
-        while (!go.load()) {}
+        while (!go.load()) {
+        }
         TypeParam::sleep_for(interval);
     });
     std::unique_lock guard(m);
@@ -164,7 +169,8 @@ TYPED_TEST(ClockTest, CVWaitUntil_InfiniteTimeout) {
     bool ok = false;
     std::atomic<bool> go = false;
     ScopedThread thread([&] {
-        while (!go.load()) {}
+        while (!go.load()) {
+        }
         // Wait to see if `TypeParam::wait_until` wakes up from timeout.
         TypeParam::sleep_for(milliseconds(1));
         {
@@ -186,7 +192,8 @@ TYPED_TEST(ClockTest, CVAnyWaitFor_OK) {
     bool ok = false;
     std::atomic<bool> go = false;
     ScopedThread thread([&] {
-        while (!go.load()) {}
+        while (!go.load()) {
+        }
         {
             std::unique_lock guard(m);
             ok = true;
@@ -208,7 +215,8 @@ TYPED_TEST(ClockTest, CVAnyWaitFor_Timeout) {
     std::shared_mutex m;
     std::atomic<bool> go = false;
     ScopedThread thread([&] {
-        while (!go.load()) {}
+        while (!go.load()) {
+        }
         TypeParam::sleep_for(interval);
     });
     std::unique_lock guard(m);
@@ -226,7 +234,8 @@ TYPED_TEST(ClockTest, CVAnyWaitFor_InfiniteTimeout) {
     bool ok = false;
     std::atomic<bool> go = false;
     ScopedThread thread([&] {
-        while (!go.load()) {}
+        while (!go.load()) {
+        }
         // Wait to see if `TypeParam::wait_for` wakes up from timeout.
         TypeParam::sleep_for(milliseconds(1));
         {
@@ -247,7 +256,8 @@ TYPED_TEST(ClockTest, CVAnyWaitUntil_OK) {
     bool ok = false;
     std::atomic<bool> go = false;
     ScopedThread thread([&] {
-        while (!go.load()) {}
+        while (!go.load()) {
+        }
         {
             std::unique_lock guard(m);
             ok = true;
@@ -269,7 +279,8 @@ TYPED_TEST(ClockTest, CVAnyWaitUntil_Timeout) {
     std::shared_mutex m;
     std::atomic<bool> go = false;
     ScopedThread thread([&] {
-        while (!go.load()) {}
+        while (!go.load()) {
+        }
         TypeParam::sleep_for(interval);
     });
     std::unique_lock guard(m);
@@ -287,7 +298,8 @@ TYPED_TEST(ClockTest, CVAnyWaitUntil_InfiniteTimeout) {
     bool ok = false;
     std::atomic<bool> go = false;
     ScopedThread thread([&] {
-        while (!go.load()) {}
+        while (!go.load()) {
+        }
         // Wait to see if `TypeParam::wait_until` wakes up from timeout.
         TypeParam::sleep_for(milliseconds(1));
         {
@@ -308,7 +320,8 @@ TYPED_TEST(ClockTest, FutureWaitFor_OK) {
     std::future<int> future = promise.get_future();
     std::atomic<bool> go = false;
     ScopedThread thread([&] {
-        while (!go.load()) {}
+        while (!go.load()) {
+        }
         promise.set_value(42);
     });
     auto before = TypeParam::now();
@@ -335,7 +348,8 @@ TYPED_TEST(ClockTest, FutureWaitFor_Timeout) {
     std::future<int> future = promise.get_future();
     std::atomic<bool> go = false;
     ScopedThread thread([&] {
-        while (!go.load()) {}
+        while (!go.load()) {
+        }
         TypeParam::sleep_for(interval);
     });
     auto before = TypeParam::now();
@@ -351,7 +365,8 @@ TYPED_TEST(ClockTest, FutureWaitFor_InfiniteTimeout) {
     std::future<int> future = promise.get_future();
     std::atomic<bool> go = false;
     ScopedThread thread([&] {
-        while (!go.load()) {}
+        while (!go.load()) {
+        }
         // Wait to see if `TypeParam::wait_for` wakes up from timeout.
         TypeParam::sleep_for(milliseconds(1));
         promise.set_value(42);
@@ -366,7 +381,8 @@ TYPED_TEST(ClockTest, FutureWaitUntil_OK) {
     std::future<int> future = promise.get_future();
     std::atomic<bool> go = false;
     ScopedThread thread([&] {
-        while (!go.load()) {}
+        while (!go.load()) {
+        }
         promise.set_value(42);
     });
     auto until = TypeParam::now() + hours(10);
@@ -392,7 +408,8 @@ TYPED_TEST(ClockTest, FutureWaitUntil_Timeout) {
     std::future<int> future = promise.get_future();
     std::atomic<bool> go = false;
     ScopedThread thread([&] {
-        while (!go.load()) {}
+        while (!go.load()) {
+        }
         TypeParam::sleep_for(interval);
     });
     auto until = TypeParam::now() + interval;
@@ -408,7 +425,8 @@ TYPED_TEST(ClockTest, FutureWaitUntil_InfiniteTimeout) {
     std::future<int> future = promise.get_future();
     std::atomic<bool> go = false;
     ScopedThread thread([&] {
-        while (!go.load()) {}
+        while (!go.load()) {
+        }
         // Wait to see if `TypeParam::wait_until` wakes up from timeout.
         TypeParam::sleep_for(milliseconds(1));
         promise.set_value(42);
@@ -424,7 +442,8 @@ TYPED_TEST(ClockTest, SharedFutureWaitFor_OK) {
     std::shared_future<int> future = promise.get_future();
     std::atomic<bool> go = false;
     ScopedThread thread([&] {
-        while (!go.load()) {}
+        while (!go.load()) {
+        }
         promise.set_value(42);
     });
     auto before = TypeParam::now();
@@ -451,7 +470,8 @@ TYPED_TEST(ClockTest, SharedFutureWaitFor_Timeout) {
     std::shared_future<int> future = promise.get_future();
     std::atomic<bool> go = false;
     ScopedThread thread([&] {
-        while (!go.load()) {}
+        while (!go.load()) {
+        }
         TypeParam::sleep_for(interval);
     });
     auto before = TypeParam::now();
@@ -467,7 +487,8 @@ TYPED_TEST(ClockTest, SharedFutureWaitFor_InfiniteTimeout) {
     std::shared_future<int> future = promise.get_future();
     std::atomic<bool> go = false;
     ScopedThread thread([&] {
-        while (!go.load()) {}
+        while (!go.load()) {
+        }
         // Wait to see if `TypeParam::wait_for` wakes up from timeout.
         TypeParam::sleep_for(milliseconds(1));
         promise.set_value(42);
@@ -482,7 +503,8 @@ TYPED_TEST(ClockTest, SharedFutureWaitUntil_OK) {
     std::shared_future<int> future = promise.get_future();
     std::atomic<bool> go = false;
     ScopedThread thread([&] {
-        while (!go.load()) {}
+        while (!go.load()) {
+        }
         promise.set_value(42);
     });
     auto until = TypeParam::now() + hours(10);
@@ -508,7 +530,8 @@ TYPED_TEST(ClockTest, SharedFutureWaitUntil_Timeout) {
     std::shared_future<int> future = promise.get_future();
     std::atomic<bool> go = false;
     ScopedThread thread([&] {
-        while (!go.load()) {}
+        while (!go.load()) {
+        }
         TypeParam::sleep_for(interval);
     });
     auto until = TypeParam::now() + interval;
@@ -524,7 +547,8 @@ TYPED_TEST(ClockTest, SharedFutureWaitUntil_InfiniteTimeout) {
     std::shared_future<int> future = promise.get_future();
     std::atomic<bool> go = false;
     ScopedThread thread([&] {
-        while (!go.load()) {}
+        while (!go.load()) {
+        }
         // Wait to see if `TypeParam::wait_until` wakes up from timeout.
         TypeParam::sleep_for(milliseconds(1));
         promise.set_value(42);
