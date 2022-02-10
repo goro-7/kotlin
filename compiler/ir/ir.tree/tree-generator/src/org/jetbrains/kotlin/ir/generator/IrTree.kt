@@ -509,6 +509,7 @@ object IrTree : AbstractTreeBuilder() {
         visitorParent = rootElement
         visitorParam = "body"
         transformByChildren = true
+        typeKind = TypeKind.Class
     }
     val expressionBody: ElementConfig by element(Expression) {
         transform = true
