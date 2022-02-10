@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.ir.backend.js.utils
 import org.jetbrains.kotlin.backend.common.ir.isTopLevel
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.backend.js.JsIrBackendContext
+import org.jetbrains.kotlin.ir.backend.js.JsLoweredDeclarationOrigin
 import org.jetbrains.kotlin.ir.backend.js.lower.serialization.ir.JsManglerIr
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
@@ -109,7 +110,7 @@ fun jsFunctionSignature(declaration: IrFunction, context: JsIrBackendContext): S
     require(!declaration.isStaticMethodOfClass)
     require(declaration.dispatchReceiverParameter != null)
 
-    val declarationName = declaration.getJsNameOrKotlinName().asString()
+    var declarationName = declaration.getJsNameOrKotlinName().asString()
 
     if (declaration.hasStableJsName(context)) {
         // TODO: Handle reserved suffix in FE
@@ -119,15 +120,8 @@ fun jsFunctionSignature(declaration: IrFunction, context: JsIrBackendContext): S
         return declarationName
     }
 
-    if (declaration is IrSimpleFunction && declaration.correspondingPropertySymbol != null) {
-        val property = declaration.correspondingPropertySymbol!!.owner
-        val name = property.getJsNameOrKotlinName().asString()
-        val prefix = when(declaration) {
-            property.getter -> "get_"
-            property.setter -> "set_"
-            else -> error("")
-        }
-        return sanitizeName(prefix + name) + RESERVED_MEMBER_NAME_SUFFIX
+    declaration.nameIfPropertyAccessor()?.let {
+        declarationName = it
     }
 
     val nameBuilder = StringBuilder()
@@ -150,7 +144,10 @@ fun jsFunctionSignature(declaration: IrFunction, context: JsIrBackendContext): S
     val signature = nameBuilder.toString()
 
     // TODO: Use better hashCode
-    return sanitizeName(declarationName, withHash = false) + "_" + abs(signature.hashCode()).toString(Character.MAX_RADIX) + RESERVED_MEMBER_NAME_SUFFIX
+    return sanitizeName(
+        declarationName,
+        withHash = false
+    ) + "_" + abs(signature.hashCode()).toString(Character.MAX_RADIX) + RESERVED_MEMBER_NAME_SUFFIX
 }
 
 class NameTables(
@@ -306,8 +303,10 @@ class NameTables(
                 }
             }
 
-            else ->
-                globalNames.declareFreshName(declaration, declaration.name.asString())
+            else -> {
+                val name = declaration.nameIfPropertyAccessor() ?: declaration.name.asString()
+                globalNames.declareFreshName(declaration, name)
+            }
         }
     }
 
@@ -408,6 +407,32 @@ fun sanitizeName(name: String, withHash: Boolean = true): String {
     } else {
         builder.toString()
     }
+}
+
+fun IrDeclarationWithName.nameIfPropertyAccessor(): String? {
+    if (this is IrSimpleFunction) {
+        return when {
+            this.correspondingPropertySymbol != null -> {
+                val property = this.correspondingPropertySymbol!!.owner
+                val name = property.getJsNameOrKotlinName().asString()
+                val prefix = when (this) {
+                    property.getter -> "get_"
+                    property.setter -> "set_"
+                    else -> error("")
+                }
+                prefix + name
+            }
+            this.origin == JsLoweredDeclarationOrigin.BRIDGE_PROPERTY_ACCESSOR -> {
+                this.getJsNameOrKotlinName().asString()
+                    .removePrefix("<")
+                    .removeSuffix(">")
+                    .replaceFirst("get-", "get_")
+                    .replaceFirst("set-", "set_")
+            }
+            else -> null
+        }
+    }
+    return null
 }
 
 private inline fun Char.mangleIfNot(predicate: Char.() -> Boolean) =
