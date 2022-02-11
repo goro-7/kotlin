@@ -19,9 +19,7 @@ import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.types.classifierOrFail
 import org.jetbrains.kotlin.ir.types.classifierOrNull
 import org.jetbrains.kotlin.ir.types.getClass
-import org.jetbrains.kotlin.ir.util.constructedClass
-import org.jetbrains.kotlin.ir.util.constructors
-import org.jetbrains.kotlin.ir.util.primaryConstructor
+import org.jetbrains.kotlin.ir.util.*
 
 internal class JsUsefulDeclarationProcessor(
     override val context: JsIrBackendContext,
@@ -108,6 +106,16 @@ internal class JsUsefulDeclarationProcessor(
                     invokeFunForLambda(expression)
                         .enqueue(data, "intrinsic: suspendSuperType")
                 }
+            }
+        }
+    }
+
+    override fun processClass(irClass: IrClass) {
+        super.processClass(irClass).also {
+            when {
+                irClass.isInterface -> context.intrinsics.metadataInterfaceConstructorSymbol.owner.enqueue(irClass, "interface metadata")
+                irClass.isObject -> context.intrinsics.metadataObjectConstructorSymbol.owner.enqueue(irClass, "object metadata")
+                else -> context.intrinsics.metadataClassConstructorSymbol.owner.enqueue(irClass, "class metadata")
             }
         }
     }

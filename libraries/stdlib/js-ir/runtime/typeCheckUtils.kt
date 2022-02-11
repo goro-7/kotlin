@@ -5,39 +5,69 @@
 
 package kotlin.js
 
-private external interface Metadata {
-    val interfaces: Array<Ctor>
-    val suspendArity: Array<Int>?
-
-    // This field gives fast access to the prototype of metadata owner (Object.getPrototypeOf())
-    // Can be pre-initialized or lazy initialized and then should be immutable
-    var fastPrototype: Prototype?
-
-    // The hint is used as a sort of flag, pointed to the class or the interface, which is not a parent for metadata owner
-    // Can be mutated quite often
-    var nonParentHint: dynamic
-
-    // This is an object for memoization of a isInterfaceImpl function
-    // Can be mutated quite often
-    val interfacesCache: IsImplementsCache
-
-    // This is an id of interface which is used as a key inside interfacesCache
-    // Can be mutated quite often
-    var interfaceId: Number?
+internal fun interfaceMeta(
+    interfaces: Array<Ctor>,
+    name: String?,
+    associatedObjectKey: Number?,
+    associatedObjects: dynamic,
+    suspendArity: Array<Int>?,
+): Metadata {
+    return Metadata("interface", interfaces, name, associatedObjectKey, associatedObjects, -1, null, suspendArity)
 }
 
-private external interface Ctor {
-    val `$metadata$`: Metadata?
+internal fun objectMeta(
+    interfaces: Array<Ctor>,
+    name: String?,
+    associatedObjectKey: Number?,
+    associatedObjects: dynamic,
+    suspendArity: Array<Int>?,
+    fastPrototype: Prototype?,
+): Metadata {
+    return Metadata("object", interfaces, name, associatedObjectKey, associatedObjects, null, fastPrototype, suspendArity)
+}
+
+internal fun classMeta(
+    interfaces: Array<Ctor>,
+    name: String?,
+    associatedObjectKey: Number?,
+    associatedObjects: dynamic,
+    suspendArity: Array<Int>?,
+    fastPrototype: Prototype?,
+): Metadata {
+    return Metadata("class", interfaces, name, associatedObjectKey, associatedObjects, null, fastPrototype, suspendArity)
+}
+
+internal class Metadata(
+    val kind: String,
+    val interfaces: Array<Ctor>,
+    // This field gives fast access to the prototype of metadata owner (Object.getPrototypeOf())
+    // Can be pre-initialized or lazy initialized and then should be immutable
+    val simpleName: String?,
+    val associatedObjectKey: Number?,
+    val associatedObjects: dynamic,
+    var interfaceId: Number?,
+    var fastPrototype: Prototype?,
+    val suspendArity: Array<Int>?,
+    // This is an id of interface which is used as a key inside interfacesCache
+) {
+    // This is an object for memoization of a isInterfaceImpl function
+    // Can be mutated quite often
+    val interfacesCache = IsImplementsCache(interfaces.size == 0)
+
+    // This is a flag for memoization of a isInterfaceImpl function
+    class IsImplementsCache(var isComplete: Boolean) {
+        val implementInterfaceMemo = js("{}")
+    }
+}
+
+internal external interface Ctor {
+    var `$metadata$`: Metadata?
+    var constructor: Ctor?
     val prototype: Prototype?
 }
 
-private external interface Prototype {
+internal external interface Prototype {
     val constructor: Ctor?
-}
-
-private external interface IsImplementsCache {
-    val implementInterfaceMemo: dynamic
-    var isComplete: Boolean
 }
 
 private var interfacesCounter = 0
@@ -48,18 +78,20 @@ private fun Ctor.getOrDefineInterfaceId(): Number? {
     return if (interfaceId != -1) {
         interfaceId
     } else {
-        interfacesCounter++.also { metadata.interfaceId = it }
+        val result = interfacesCounter++
+        metadata.interfaceId = result
+        result
     }
 }
 
 private fun Ctor.getPrototype() = prototype?.let { js("Object").getPrototypeOf(it).unsafeCast<Prototype>() }
 
-private fun IsImplementsCache.extendCacheWith(cache: IsImplementsCache?) {
+internal fun Metadata.IsImplementsCache.extendCacheWith(cache: Metadata.IsImplementsCache?) {
     val anotherInterfaceMemo = cache?.implementInterfaceMemo ?: return
     js("Object").assign(implementInterfaceMemo, anotherInterfaceMemo)
 }
 
-private fun IsImplementsCache.extendCacheWithSingle(intr: Ctor) {
+internal fun Metadata.IsImplementsCache.extendCacheWithSingle(intr: Ctor) {
     implementInterfaceMemo[intr.getOrDefineInterfaceId()] = true
 }
 
@@ -72,7 +104,7 @@ private fun fastGetPrototype(ctor: Ctor): Prototype? {
     } ?: ctor.getPrototype()
 }
 
-private fun completeInterfaceCache(ctor: Ctor): IsImplementsCache? {
+private fun completeInterfaceCache(ctor: Ctor): Metadata.IsImplementsCache? {
     val metadata = ctor.`$metadata$`
     val interfacesCache = metadata?.interfacesCache
 
@@ -87,32 +119,33 @@ private fun completeInterfaceCache(ctor: Ctor): IsImplementsCache? {
         }
     }
 
-    return fastGetPrototype(ctor)?.constructor?.run {
-        val parentInterfacesCache = completeInterfaceCache(this) ?: return interfacesCache
-        interfacesCache?.apply {
-            extendCacheWith(parentInterfacesCache)
-            isComplete = true
-        } ?: parentInterfacesCache
-    }
+    val constructor = fastGetPrototype(ctor)?.constructor ?: return null
+    val parentInterfacesCache = completeInterfaceCache(constructor) ?: return interfacesCache
+
+    if (interfacesCache == null) return parentInterfacesCache
+
+    interfacesCache.extendCacheWith(parentInterfacesCache)
+    interfacesCache.isComplete = true
+
+    return interfacesCache
 }
 
-private fun isInterfaceImplFast(ctor: Ctor, iface: dynamic): Boolean {
+private fun isInterfaceImpl(ctor: Ctor, iface: Ctor): Boolean {
     val interfacesCache = ctor.`$metadata$`?.interfacesCache
 
     return if (interfacesCache != null) {
         if (!interfacesCache.isComplete) completeInterfaceCache(ctor)
-        val interfaceId = iface.`$metadata$`?.interfaceId ?: -1
+        val interfaceId = iface.`$metadata$`?.interfaceId ?: return false
         !!interfacesCache.implementInterfaceMemo[interfaceId]
     } else {
-        fastGetPrototype(ctor)?.constructor?.run {
-            isInterfaceImplFast(this, iface)
-        } ?: false
+        val constructor = fastGetPrototype(ctor)?.constructor ?: return false
+        isInterfaceImpl(constructor, iface)
     }
 }
 
 internal fun isInterface(obj: dynamic, iface: dynamic): Boolean {
     val ctor = obj.constructor ?: return false
-    return isInterfaceImplFast(ctor, iface)
+    return isInterfaceImpl(ctor, iface)
 }
 
 /*
@@ -244,7 +277,7 @@ internal fun jsIsType(obj: dynamic, jsClass: dynamic): Boolean {
     }
 
     if (klassMetadata.kind === "interface" && obj.constructor != null) {
-        return isInterfaceImplFast(obj.constructor, jsClass)
+        return isInterfaceImpl(obj.constructor, jsClass)
     }
 
     return false
