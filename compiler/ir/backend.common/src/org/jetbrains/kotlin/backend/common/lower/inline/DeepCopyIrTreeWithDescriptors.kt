@@ -47,13 +47,13 @@ internal class DeepCopyIrTreeWithSymbolsForInliner(
     private inner class InlinerSymbolRenamer : SymbolRenamer {
         private val map = mutableMapOf<IrSymbol, Name>()
 
-        override fun getClassName(symbol: IrClassSymbol) = map.getOrPut(symbol) { generateCopyName(symbol.owner.name) }
-        override fun getFunctionName(symbol: IrSimpleFunctionSymbol) = map.getOrPut(symbol) { generateCopyName(symbol.owner.name) }
+        override fun getClassName(symbol: IrClassSymbol) = symbol.owner.name
+        override fun getFunctionName(symbol: IrSimpleFunctionSymbol) = symbol.owner.name
         override fun getFieldName(symbol: IrFieldSymbol) = symbol.owner.name
         override fun getFileName(symbol: IrFileSymbol) = symbol.owner.fqName
         override fun getExternalPackageFragmentName(symbol: IrExternalPackageFragmentSymbol) = symbol.owner.fqName
         override fun getEnumEntryName(symbol: IrEnumEntrySymbol) = symbol.owner.name
-        override fun getVariableName(symbol: IrVariableSymbol) = map.getOrPut(symbol) { generateCopyName(symbol.owner.name) }
+        override fun getVariableName(symbol: IrVariableSymbol) = symbol.owner.name
         override fun getTypeParameterName(symbol: IrTypeParameterSymbol) = symbol.owner.name
         override fun getValueParameterName(symbol: IrValueParameterSymbol) = symbol.owner.name
     }
