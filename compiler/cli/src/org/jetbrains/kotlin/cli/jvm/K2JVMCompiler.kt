@@ -74,13 +74,17 @@ class K2JVMCompiler : CLICompiler<K2JVMCompilerArguments>() {
         val moduleName = arguments.moduleName ?: JvmProtoBufUtil.DEFAULT_MODULE_NAME
         configuration.put(CommonConfigurationKeys.MODULE_NAME, moduleName)
 
-        configuration.configureExplicitContentRoots(arguments)
         configuration.configureStandardLibs(paths, arguments)
         configuration.configureAdvancedJvmOptions(arguments)
         configuration.configureKlibPaths(arguments)
 
-        if (arguments.buildFile == null && !arguments.version  && !arguments.allowNoSourceFiles &&
-            (arguments.script || arguments.expression != null || arguments.freeArgs.isEmpty())) {
+        if (
+            arguments.buildFile == null &&
+            !arguments.version &&
+            !arguments.allowNoSourceFiles &&
+            (arguments.script || arguments.expression != null || arguments.freeArgs.isEmpty())
+        ) {
+            configuration.configureExplicitContentRoots(arguments)
 
             // script or repl
             if (arguments.script && arguments.freeArgs.isEmpty()) {
@@ -131,7 +135,7 @@ class K2JVMCompiler : CLICompiler<K2JVMCompilerArguments>() {
                 if (arguments.javaPackagePrefix != null) {
                     strongWarning("The '-Xjava-package-prefix' option is ignored because '-Xbuild-file' is specified")
                 }
-
+                configuration.configureExplicitContentRoots(arguments)
                 val sanitizedCollector = FilteringMessageCollector(messageCollector, VERBOSE::contains)
                 configuration.put(JVMConfigurationKeys.MODULE_XML_FILE, buildFile)
                 CompileEnvironmentUtil.loadModuleChunk(buildFile, sanitizedCollector)
