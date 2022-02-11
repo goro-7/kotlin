@@ -158,7 +158,7 @@ class NewNamerImpl(
 
         } else {  // Non-external declaration
             val name = declaration.nameIfPropertyAccessor() ?: declaration.name.asString()
-            staticNames.declareFreshName(declaration, declaration.name.asString())
+            staticNames.declareFreshName(declaration, name)
             val unitReference = unit.referenceCodegenUnitOfDeclaration(declaration)
             if (unitReference is IrToJs.OtherUnitReference) {
                 registerImport(unitReference.importPath, exportId(declaration))
