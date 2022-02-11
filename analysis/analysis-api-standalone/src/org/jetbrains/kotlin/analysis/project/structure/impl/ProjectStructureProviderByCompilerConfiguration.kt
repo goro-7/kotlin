@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.analysis.project.structure.impl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.project.structure.KtLibraryModule
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.config.CompilerConfiguration
@@ -40,6 +41,10 @@ internal class ProjectStructureProviderByCompilerConfiguration(
     }
 
     private val sourceModule = KtSourceModuleByCompilerConfiguration(compilerConfig, project, ktFiles, jarFileSystem)
+
+    internal val libraryModules: Collection<KtLibraryModule> by lazy {
+        sourceModule.directRegularDependencies
+    }
 
     override fun getKtModuleForKtElement(element: PsiElement): KtModule {
         val containingFile = element.containingFile.virtualFile
