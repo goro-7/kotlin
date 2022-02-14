@@ -70,19 +70,15 @@ private class JsIrModuleCrossModuleReferecenceBuilder(val module: JsIrModule, va
     val exports = mutableSetOf<String>()
     var transitiveJsExportFrom = emptyList<JsIrModule>()
 
-    private lateinit var exportNames: Map<String, String> // tag -> name
+    private lateinit var exportNames: Map<String, Int> // tag -> index
 
     private fun buildUniqueNames() {
-        val names = module.fragments.flatMap { it.nameBindings.entries }.associate { it.key to sanitizeName(it.value.ident) }
-        val nameToCnt = mutableMapOf<String, Int>()
+        val result = mutableMapOf<String, Int>()
 
-        val result = mutableMapOf<String, String>()
+        var index = 0
 
         exports.sorted().forEach { tag ->
-            val suggestedName = names[tag] ?: error("Name not found for tag $tag")
-            val suffix = nameToCnt[suggestedName]?.let { "_$it" } ?: ""
-            nameToCnt[suggestedName] = nameToCnt.getOrDefault(suggestedName, 0) + 1
-            result[tag] = suggestedName + suffix
+            result[tag] = index++
         }
 
         exportNames = result
@@ -112,7 +108,7 @@ private class JsIrModuleCrossModuleReferecenceBuilder(val module: JsIrModule, va
             val importedAs = tagToName[tag]!!
             val moduleName = it.module.module.import()
 
-            val importStatement = JsVars.JsVar(importedAs, JsNameRef(exportedAs, ReservedJsNames.makeCrossModuleNameRef(moduleName)))
+            val importStatement = JsVars.JsVar(importedAs, JsArrayAccess(ReservedJsNames.makeCrossModuleNameRef(moduleName), JsIntLiteral(exportedAs)))
 
             tag to importStatement
         }
@@ -127,7 +123,7 @@ private class JsIrModuleCrossModuleReferecenceBuilder(val module: JsIrModule, va
 class CrossModuleReferences(
     val importedModules: List<JsImportedModule>, // additional Kotlin imported modules
     val imports: Map<String, JsVars.JsVar>, // tag -> import statement
-    val exports: Map<String, String>, // tag -> name
+    val exports: Map<String, Int>, // tag -> index
     val transitiveJsExportFrom: List<JsName> // the list of modules which provide their js exports for transitive export
 ) {
     companion object {

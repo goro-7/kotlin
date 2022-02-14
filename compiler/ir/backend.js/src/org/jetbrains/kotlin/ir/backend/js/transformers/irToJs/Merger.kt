@@ -67,14 +67,14 @@ class Merger(
 
             val createExportBlock = jsAssignment(
                 ReservedJsNames.makeCrossModuleNameRef(internalModuleName),
-                JsAstUtils.or(ReservedJsNames.makeCrossModuleNameRef(internalModuleName), JsObjectLiteral())
+                JsAstUtils.or(ReservedJsNames.makeCrossModuleNameRef(internalModuleName), JsArrayLiteral())
             ).makeStmt()
             additionalExports += createExportBlock
 
-            crossModuleReferences.exports.entries.forEach { (tag, name) ->
+            crossModuleReferences.exports.entries.forEach { (tag, index) ->
                 val internalName = nameMap[tag] ?: error("Missing name for declaration '$tag'")
                 val crossModuleRef = ReservedJsNames.makeCrossModuleNameRef(ReservedJsNames.makeInternalModuleName())
-                additionalExports += jsAssignment(JsNameRef(name, crossModuleRef), JsNameRef(internalName)).makeStmt()
+                additionalExports += jsAssignment(JsArrayAccess(crossModuleRef, JsIntLiteral(index)), JsNameRef(internalName)).makeStmt()
             }
         }
     }
