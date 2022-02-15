@@ -306,8 +306,6 @@ object FirKotlinToJvmBytecodeCompiler {
             (projectEnvironment as VfsBasedProjectEnvironment).project, ClassBuilderFactories.BINARIES,
             moduleFragment.descriptor, dummyBindingContext, ktFiles,
             moduleConfiguration
-        ).codegenFactory(
-            codegenFactory
         ).withModule(
             module
         ).onIndependentPartCompilationEnd(
