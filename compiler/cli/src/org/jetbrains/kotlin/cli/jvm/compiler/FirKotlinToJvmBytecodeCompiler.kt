@@ -304,8 +304,7 @@ object FirKotlinToJvmBytecodeCompiler {
 
         val generationState = GenerationState.Builder(
             (projectEnvironment as VfsBasedProjectEnvironment).project, ClassBuilderFactories.BINARIES,
-            moduleFragment.descriptor, dummyBindingContext, ktFiles,
-            moduleConfiguration
+            moduleFragment.descriptor, dummyBindingContext, moduleConfiguration
         ).withModule(
             module
         ).onIndependentPartCompilationEnd(
@@ -322,8 +321,9 @@ object FirKotlinToJvmBytecodeCompiler {
 
         performanceManager?.notifyIRLoweringStarted()
         generationState.beforeCompile()
+        generationState.oldBEInitTrace(ktFiles)
         codegenFactory.generateModuleInFrontendIRMode(
-            generationState, moduleFragment, symbolTable, extensions, FirJvmBackendExtension(session, components)
+            generationState, ktFiles, moduleFragment, symbolTable, extensions, FirJvmBackendExtension(session, components)
         ) {
             performanceManager?.notifyIRLoweringFinished()
             performanceManager?.notifyIRGenerationStarted()
