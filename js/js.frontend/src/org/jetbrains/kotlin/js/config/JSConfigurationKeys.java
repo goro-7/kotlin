@@ -99,4 +99,7 @@ public class JSConfigurationKeys {
 
     public static final CompilerConfigurationKey<Boolean> PROPERTY_LAZY_INITIALIZATION =
             CompilerConfigurationKey.create("perform lazy initialization for properties");
+
+    public static final CompilerConfigurationKey<Boolean> MINIMIZED_MEMBER_NAMES =
+            CompilerConfigurationKey.create("perform minimization of member names");
 }

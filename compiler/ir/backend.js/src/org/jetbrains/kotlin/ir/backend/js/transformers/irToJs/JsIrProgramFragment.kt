@@ -5,8 +5,7 @@
 
 package org.jetbrains.kotlin.ir.backend.js.transformers.irToJs
 
-import org.jetbrains.kotlin.ir.backend.js.utils.sanitizeName
-import org.jetbrains.kotlin.ir.backend.js.utils.toJs
+import org.jetbrains.kotlin.ir.backend.js.utils.toJsIdentifier
 import org.jetbrains.kotlin.js.backend.ast.*
 
 class JsIrProgramFragment(val packageFqn: String) {
@@ -79,7 +78,7 @@ private class JsIrModuleCrossModuleReferecenceBuilder(val module: JsIrModule, va
         var index = 0
 
         exports.sorted().forEach { tag ->
-            result[tag] = index++.toJs()
+            result[tag] = index++.toJsIdentifier()
         }
 
         exportNames = result

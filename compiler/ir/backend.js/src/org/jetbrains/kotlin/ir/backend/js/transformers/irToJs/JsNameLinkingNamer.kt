@@ -87,7 +87,7 @@ class JsNameLinkingNamer(private val context: JsIrBackendContext) : IrNamerBase(
     }
 
     private fun IrClass.fieldData(): Map<IrField, String> {
-        return fieldDataCache.getOrPut(this) {
+        return context.fieldDataCache.getOrPut(this) {
             val nameCnt = mutableMapOf<String, Int>()
 
             val allClasses = DFS.topologicalOrder(listOf(this)) { node ->
@@ -102,7 +102,9 @@ class JsNameLinkingNamer(private val context: JsIrBackendContext) : IrNamerBase(
                 it.declarations.forEach {
                     when {
                         it is IrField -> {
-                            val safeName = it.safeName()
+                            val safeName = if (context.minimizedNameGenerator.enabled) {
+                                context.minimizedNameGenerator.generateNextName()
+                            } else it.safeName()
                             val suffix = nameCnt.getOrDefault(safeName, 0) + 1
                             nameCnt[safeName] = suffix
                             result[it] = safeName + "_$suffix"
@@ -119,10 +121,10 @@ class JsNameLinkingNamer(private val context: JsIrBackendContext) : IrNamerBase(
     }
 }
 
-private val fieldDataCache = mutableMapOf<IrClass, Map<IrField, String>>()
-
 private fun IrField.safeName(): String {
-    return myIndex++.toJs()
+    return sanitizeName(name.asString()).let {
+        if (it.lastOrNull()!!.isDigit()) it + "_" else it // Avoid name clashes
+    }
 }
 
 private fun List<JsName>.makeRef(): JsNameRef {
