@@ -86,8 +86,6 @@ class JsNameLinkingNamer(private val context: JsIrBackendContext) : IrNamerBase(
         return JsName(field.parentAsClass.fieldData()[field]!!, false)
     }
 
-    private val fieldDataCache = mutableMapOf<IrClass, Map<IrField, String>>()
-
     private fun IrClass.fieldData(): Map<IrField, String> {
         return fieldDataCache.getOrPut(this) {
             val nameCnt = mutableMapOf<String, Int>()
@@ -116,15 +114,15 @@ class JsNameLinkingNamer(private val context: JsIrBackendContext) : IrNamerBase(
                 }
             }
 
-            return result
+            result
         }
     }
 }
 
+private val fieldDataCache = mutableMapOf<IrClass, Map<IrField, String>>()
+
 private fun IrField.safeName(): String {
-    return sanitizeName(name.asString()).let {
-        if (it.lastOrNull()!!.isDigit()) it + "_" else it // Avoid name clashes
-    }
+    return myIndex++.toJs()
 }
 
 private fun List<JsName>.makeRef(): JsNameRef {

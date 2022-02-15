@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.ir.types.isUnit
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
+import org.jetbrains.kotlin.js.backend.ast.JsName
 import org.jetbrains.kotlin.js.common.isES5IdentifierPart
 import org.jetbrains.kotlin.js.common.isES5IdentifierStart
 import org.jetbrains.kotlin.js.common.isValidES5Identifier
@@ -106,6 +107,20 @@ fun NameTable<IrDeclaration>.dump(): String =
 
 private const val RESERVED_MEMBER_NAME_SUFFIX = "_k$"
 
+var myIndex = 0
+
+val signatureMap = mutableMapOf<String, String>()
+
+fun Int.toJs(): String {
+    val first = ('a'.code + (this % 26)).toChar().toString()
+    val other = this / 26
+    if (other == 0) {
+        return first
+    } else {
+        return first + other.toString(Character.MAX_RADIX)
+    }
+}
+
 fun jsFunctionSignature(declaration: IrFunction, context: JsIrBackendContext): String {
     require(!declaration.isStaticMethodOfClass)
     require(declaration.dispatchReceiverParameter != null)
@@ -144,10 +159,14 @@ fun jsFunctionSignature(declaration: IrFunction, context: JsIrBackendContext): S
     val signature = nameBuilder.toString()
 
     // TODO: Use better hashCode
-    return sanitizeName(
+    val tmp = sanitizeName(
         declarationName,
         withHash = false
     ) + "_" + abs(signature.hashCode()).toString(Character.MAX_RADIX) + RESERVED_MEMBER_NAME_SUFFIX
+
+    return signatureMap.getOrPut(tmp) {
+        myIndex++.toJs()
+    }
 }
 
 class NameTables(
