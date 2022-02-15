@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.ir.backend.js.transformers.irToJs
 
 import org.jetbrains.kotlin.ir.backend.js.utils.sanitizeName
+import org.jetbrains.kotlin.ir.backend.js.utils.toJs
 import org.jetbrains.kotlin.js.backend.ast.*
 
 class JsIrProgramFragment(val packageFqn: String) {
@@ -70,15 +71,15 @@ private class JsIrModuleCrossModuleReferecenceBuilder(val module: JsIrModule, va
     val exports = mutableSetOf<String>()
     var transitiveJsExportFrom = emptyList<JsIrModule>()
 
-    private lateinit var exportNames: Map<String, Int> // tag -> index
+    private lateinit var exportNames: Map<String, String> // tag -> index
 
     private fun buildUniqueNames() {
-        val result = mutableMapOf<String, Int>()
+        val result = mutableMapOf<String, String>()
 
         var index = 0
 
         exports.sorted().forEach { tag ->
-            result[tag] = index++
+            result[tag] = index++.toJs()
         }
 
         exportNames = result
@@ -108,7 +109,7 @@ private class JsIrModuleCrossModuleReferecenceBuilder(val module: JsIrModule, va
             val importedAs = tagToName[tag]!!
             val moduleName = it.module.module.import()
 
-            val importStatement = JsVars.JsVar(importedAs, JsArrayAccess(ReservedJsNames.makeCrossModuleNameRef(moduleName), JsIntLiteral(exportedAs)))
+            val importStatement = JsVars.JsVar(importedAs, JsNameRef(exportedAs, ReservedJsNames.makeCrossModuleNameRef(moduleName)))
 
             tag to importStatement
         }
@@ -123,7 +124,7 @@ private class JsIrModuleCrossModuleReferecenceBuilder(val module: JsIrModule, va
 class CrossModuleReferences(
     val importedModules: List<JsImportedModule>, // additional Kotlin imported modules
     val imports: Map<String, JsVars.JsVar>, // tag -> import statement
-    val exports: Map<String, Int>, // tag -> index
+    val exports: Map<String, String>, // tag -> index
     val transitiveJsExportFrom: List<JsName> // the list of modules which provide their js exports for transitive export
 ) {
     companion object {
