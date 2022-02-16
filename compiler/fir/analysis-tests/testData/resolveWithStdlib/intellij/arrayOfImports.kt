@@ -10,7 +10,7 @@ import kotlin.reflect.KClass
     Second(arrayOf(First(arrayOf(Int::class)), First(arrayOf(Double::class))))
 )
 // Incorrect array inside
-@Second(<!ARGUMENT_TYPE_MISMATCH!>arrayOf(arrayOf(""), arrayOf(First(arrayOf())))<!>)
+@Second(<!ARGUMENT_TYPE_MISMATCH!>arrayOf(arrayOf(""), <!UNSUPPORTED!>arrayOf(First(arrayOf()))<!>)<!>)
 fun foo() {}
 
 annotation class First(val value: Array<KClass<*>>)

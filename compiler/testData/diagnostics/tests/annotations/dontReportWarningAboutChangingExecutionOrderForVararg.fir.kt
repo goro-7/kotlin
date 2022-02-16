@@ -1,13 +1,13 @@
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Anno(vararg val x: String, val y: String)
 
-@Anno(x = [["a", "b"], ["a", "b"]], y = "a")
+@Anno(x = [["a", "b"], <!UNSUPPORTED!>["a", "b"]<!>], y = "a")
 fun foo1() {}
 
 @Anno(x = ["a", "b"], y = "a")
 fun foo2() {}
 
-@Anno(x = <!ARGUMENT_TYPE_MISMATCH!>arrayOf(arrayOf("a"), arrayOf("b"))<!>, y = "a")
+@Anno(x = <!ARGUMENT_TYPE_MISMATCH!>arrayOf(arrayOf("a"), <!UNSUPPORTED!>arrayOf("b")<!>)<!>, y = "a")
 fun foo3() {}
 
 @Anno(x = arrayOf("a", "b"), y = "a")
