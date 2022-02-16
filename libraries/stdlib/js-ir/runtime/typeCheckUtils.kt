@@ -6,58 +6,87 @@
 package kotlin.js
 
 internal fun interfaceMeta(
-    interfaces: Array<Ctor>,
     name: String?,
+    interfaces: Array<Ctor>?,
     associatedObjectKey: Number?,
     associatedObjects: dynamic,
     suspendArity: Array<Int>?,
 ): Metadata {
-    return Metadata("interface", interfaces, name, associatedObjectKey, associatedObjects, -1, null, suspendArity)
+    return createMetadata("interface", name, interfaces, associatedObjectKey, associatedObjects, suspendArity, js("undefined"))
 }
 
 internal fun objectMeta(
-    interfaces: Array<Ctor>,
     name: String?,
+    interfaces: Array<Ctor>?,
     associatedObjectKey: Number?,
     associatedObjects: dynamic,
     suspendArity: Array<Int>?,
     fastPrototype: Prototype?,
 ): Metadata {
-    return Metadata("object", interfaces, name, associatedObjectKey, associatedObjects, null, fastPrototype, suspendArity)
+    return createMetadata("object", name, interfaces, associatedObjectKey, associatedObjects, suspendArity, fastPrototype)
 }
 
 internal fun classMeta(
-    interfaces: Array<Ctor>,
     name: String?,
+    interfaces: Array<Ctor>?,
     associatedObjectKey: Number?,
     associatedObjects: dynamic,
     suspendArity: Array<Int>?,
     fastPrototype: Prototype?,
 ): Metadata {
-    return Metadata("class", interfaces, name, associatedObjectKey, associatedObjects, null, fastPrototype, suspendArity)
+    return createMetadata("class", name, interfaces, associatedObjectKey, associatedObjects, suspendArity, fastPrototype)
 }
 
-internal class Metadata(
-    val kind: String,
-    val interfaces: Array<Ctor>,
+// Seems like we need to disable this check if variables are used inside js annotation
+@Suppress("UNUSED_PARAMETER")
+private fun createMetadata(
+    kind: String,
+    name: String?,
+    interfaces: Array<Ctor>?,
+    associatedObjectKey: Number?,
+    associatedObjects: dynamic,
+    suspendArity: Array<Int>?,
+    fastPrototype: Prototype?
+): Metadata {
+    return js("""({
+    kind: kind,
+    simpleName: name,
+    interfaceId: kind === "interface" ? -1 : undefined,
+    interfaces: interfaces || [],
+    associatedObjectKey: associatedObjectKey,
+    associatedObjects: associatedObjects,
+    suspendArity: suspendArity,
+    fastPrototype: fastPrototype,
+    ${'$'}kClass$: undefined,
+    interfacesCache: {
+       isComplete: interfaces === undefined || interfaces.length === 0,
+       implementInterfaceMemo: {}
+    }
+})""")
+}
+
+internal external interface Metadata {
+    val kind: String
+    val interfaces: Array<Ctor>
     // This field gives fast access to the prototype of metadata owner (Object.getPrototypeOf())
     // Can be pre-initialized or lazy initialized and then should be immutable
-    val simpleName: String?,
-    val associatedObjectKey: Number?,
-    val associatedObjects: dynamic,
-    var interfaceId: Number?,
-    var fastPrototype: Prototype?,
-    val suspendArity: Array<Int>?,
-    // This is an id of interface which is used as a key inside interfacesCache
-) {
+    val simpleName: String?
+    val associatedObjectKey: Number?
+    val associatedObjects: dynamic
+    var interfaceId: Number?
+    var fastPrototype: Prototype?
+    val suspendArity: Array<Int>?
+
+    var `$kClass$`: dynamic
     // This is an object for memoization of a isInterfaceImpl function
     // Can be mutated quite often
-    val interfacesCache = IsImplementsCache(interfaces.size == 0)
+    val interfacesCache: IsImplementsCache
+}
 
-    // This is a flag for memoization of a isInterfaceImpl function
-    class IsImplementsCache(var isComplete: Boolean) {
-        val implementInterfaceMemo = js("{}")
-    }
+// This is a flag for memoization of a isInterfaceImpl function
+internal external interface IsImplementsCache {
+    var isComplete: Boolean
+    val implementInterfaceMemo: dynamic
 }
 
 internal external interface Ctor {
@@ -86,12 +115,12 @@ private fun Ctor.getOrDefineInterfaceId(): Number? {
 
 private fun Ctor.getPrototype() = prototype?.let { js("Object").getPrototypeOf(it).unsafeCast<Prototype>() }
 
-internal fun Metadata.IsImplementsCache.extendCacheWith(cache: Metadata.IsImplementsCache?) {
+internal fun IsImplementsCache.extendCacheWith(cache: IsImplementsCache?) {
     val anotherInterfaceMemo = cache?.implementInterfaceMemo ?: return
     js("Object").assign(implementInterfaceMemo, anotherInterfaceMemo)
 }
 
-internal fun Metadata.IsImplementsCache.extendCacheWithSingle(intr: Ctor) {
+internal fun IsImplementsCache.extendCacheWithSingle(intr: Ctor) {
     implementInterfaceMemo[intr.getOrDefineInterfaceId()] = true
 }
 
@@ -104,7 +133,7 @@ private fun fastGetPrototype(ctor: Ctor): Prototype? {
     } ?: ctor.getPrototype()
 }
 
-private fun completeInterfaceCache(ctor: Ctor): Metadata.IsImplementsCache? {
+private fun completeInterfaceCache(ctor: Ctor): IsImplementsCache? {
     val metadata = ctor.`$metadata$`
     val interfacesCache = metadata?.interfacesCache
 

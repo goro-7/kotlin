@@ -36,7 +36,10 @@ private fun getKPropMetadata(paramCount: Int, setter: Any?, type: dynamic): dyna
     return mdata
 }
 
-private fun metadataObject() = classMeta(emptyArray(), null, null, null, null, null)
+private fun metadataObject(): Metadata {
+    val undef = js("undefined")
+    return classMeta(undef, undef, undef, undef, undef, undef)
+}
 
 private val propertyRefClassMetadataCache: Array<Array<dynamic>> = arrayOf<Array<dynamic>>(
     //                 immutable     ,     mutable

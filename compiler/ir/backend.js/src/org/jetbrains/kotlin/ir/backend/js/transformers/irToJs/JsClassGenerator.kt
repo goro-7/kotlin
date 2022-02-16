@@ -51,7 +51,7 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
 
         val jsClass = JsClass(name = className, baseClass = baseClassRef)
 
-        if (!baseClass.isAnyOrNull()) {
+        if (baseClass != null && !baseClass.isAny()) {
             jsClass.baseClass = baseClassRef
         }
 
@@ -361,7 +361,7 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
 
         val constructorCall = JsInvocation(
             JsNameRef(context.getNameForStaticFunction(metadataConstructor.owner)),
-            listOf(interfaces, simpleName, associatedObjectKey, associatedObjects, suspendArity, fastPrototype)
+            listOf(simpleName, interfaces, associatedObjectKey, associatedObjects, suspendArity, fastPrototype)
                 .dropLastWhile { it == null }
                 .map { it ?: Namer.JS_UNDEFINED }
         )
@@ -382,11 +382,7 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
         return JsArrayLiteral(arity)
     }
 
-    private fun generateInterfaceId(): JsPropertyInitializer {
-        return JsPropertyInitializer(JsNameRef(Namer.METADATA_INTERFACE_ID), JsIntLiteral(-1))
-    }
-
-    private fun generateSuperClasses(): JsArrayLiteral {
+    private fun generateSuperClasses(): JsArrayLiteral? {
         val parentSymbols = irClass.superTypes.mapNotNull {
             val symbol = it.classifierOrFail as IrClassSymbol
             val isFunctionType = it.isFunctionType()
@@ -400,13 +396,13 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
                 symbol
             } else null
         }
-        return JsArrayLiteral(parentSymbols.map { JsNameRef(context.getNameForClass(it.owner)) })
+
+        return parentSymbols
+            .takeIf { it.isNotEmpty() }
+            ?.run { JsArrayLiteral(map { JsNameRef(context.getNameForClass(it.owner)) }) }
     }
 
     private fun generateFastPrototype() = baseClassRef?.let { prototypeOf(it) }
-
-    private fun IrType?.isAnyOrNull(): Boolean =
-        this == null || isAny()
 
     private fun IrType.isFunctionType() = isFunctionOrKFunction() || isSuspendFunctionOrKFunction()
 
