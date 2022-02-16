@@ -5,8 +5,8 @@
 
 package org.jetbrains.kotlin.ir.generator.model
 
-import org.jetbrains.kotlin.ir.generator.elementBaseType
 import org.jetbrains.kotlin.ir.generator.config.*
+import org.jetbrains.kotlin.ir.generator.elementBaseType
 import org.jetbrains.kotlin.ir.generator.util.*
 import org.jetbrains.kotlin.utils.addToStdlib.castAll
 import org.jetbrains.kotlin.utils.addToStdlib.partitionIsInstance
@@ -65,7 +65,7 @@ fun config2model(config: Config): Model {
     }
 
     val rootElement = replaceElementRefs(config, ec2el)
-    setTypeKinds(elements)
+    configureInterfacesAndAbstractClasses(elements)
     addAbstractElement(elements)
     markLeaves(elements)
     configureDescriptorApiAnnotation(elements)
@@ -140,33 +140,6 @@ private fun markLeaves(elements: List<Element>) {
         el.isLeaf = true
         if (el.visitorParent != null) {
             el.accept = true
-        }
-    }
-}
-
-
-private fun setTypeKinds(elements: List<Element>) {
-    val nodeMap = elements.associateWith {
-        object : Node {
-            val element = it
-            override var kind = it.targetKind
-            override var parentNodes = emptyList<Node>()
-        }
-    }
-    val nodes = nodeMap.values.toList()
-    for (node in nodes) {
-        node.parentNodes = node.element.elementParents.map { nodeMap.getValue(it.element) }
-    }
-
-    solveGraphForClassVsInterface(nodes)
-    for (node in nodes) {
-        node.element.targetKind?.let { requested ->
-            val actual = node.kind!!
-            check(actual == requested) { "Could not meet type kind requirement for element ${node.element} - requested $requested, was $actual" }
-        }
-        node.element.kind = when (node.kind!!) {
-            TypeKind.Interface -> Element.Kind.Interface
-            TypeKind.Class -> Element.Kind.AbstractClass
         }
     }
 }
