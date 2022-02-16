@@ -12,10 +12,7 @@ import org.jetbrains.kotlin.fir.expressions.builder.buildExpressionWithSmartcast
 import org.jetbrains.kotlin.fir.expressions.builder.buildThisReceiverExpression
 import org.jetbrains.kotlin.fir.references.builder.buildImplicitThisReference
 import org.jetbrains.kotlin.fir.renderWithType
-import org.jetbrains.kotlin.fir.resolve.ScopeSession
-import org.jetbrains.kotlin.fir.resolve.constructType
-import org.jetbrains.kotlin.fir.resolve.scope
-import org.jetbrains.kotlin.fir.resolve.smartcastScope
+import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.resolvedTypeFromPrototype
 import org.jetbrains.kotlin.fir.scopes.FakeOverrideTypeCalculator
 import org.jetbrains.kotlin.fir.scopes.FirTypeScope
@@ -64,6 +61,9 @@ open class ExpressionReceiverValue(
         }
         if (receiverExpr is FirExpressionWithSmartcast) {
             return receiverExpr.smartcastScope(useSiteSession, scopeSession)
+        }
+        if (receiverExpr is FirSyntheticsAccessorExpression) {
+            return receiverExpr.syntheticsScope(useSiteSession)
         }
         return type.scope(useSiteSession, scopeSession, FakeOverrideTypeCalculator.DoNothing)
     }

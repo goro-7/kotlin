@@ -10,14 +10,14 @@ import org.jetbrains.kotlin.fir.declarations.FirClass
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.expressions.FirExpressionWithSmartcast
 import org.jetbrains.kotlin.fir.expressions.FirExpressionWithSmartcastToNull
+import org.jetbrains.kotlin.fir.expressions.FirPropertyAccessExpression
+import org.jetbrains.kotlin.fir.expressions.FirSyntheticsAccessorExpression
+import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
 import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
 import org.jetbrains.kotlin.fir.scopes.FakeOverrideTypeCalculator
 import org.jetbrains.kotlin.fir.scopes.FirTypeScope
 import org.jetbrains.kotlin.fir.scopes.FirUnstableSmartcastTypeScope
-import org.jetbrains.kotlin.fir.scopes.impl.FirScopeWithFakeOverrideTypeCalculator
-import org.jetbrains.kotlin.fir.scopes.impl.FirStandardOverrideChecker
-import org.jetbrains.kotlin.fir.scopes.impl.FirTypeIntersectionScope
-import org.jetbrains.kotlin.fir.scopes.impl.getOrBuildScopeForIntegerConstantOperatorType
+import org.jetbrains.kotlin.fir.scopes.impl.*
 import org.jetbrains.kotlin.fir.scopes.scopeForClass
 import org.jetbrains.kotlin.fir.symbols.ensureResolved
 import org.jetbrains.kotlin.fir.symbols.impl.ConeClassLikeLookupTagImpl
@@ -45,6 +45,12 @@ fun FirExpressionWithSmartcast.smartcastScope(
         return originalScope
     }
     return FirUnstableSmartcastTypeScope(smartcastScope, originalScope)
+}
+
+fun FirSyntheticsAccessorExpression.syntheticsScope(useSiteSession: FirSession): FirTypeScope? {
+    val propertyAccess = delegate as? FirPropertyAccessExpression ?: return null
+    val callee = propertyAccess.calleeReference as? FirResolvedNamedReference ?: return null
+    return FirSyntheticsScope(callee.resolvedSymbol.fir, useSiteSession)
 }
 
 fun ConeKotlinType.scope(

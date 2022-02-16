@@ -2357,7 +2357,7 @@ open class RawFirBuilder(
                 )
             val firSelector = selector.toFirExpression("Incorrect selector expression")
             if (firSelector is FirQualifiedAccess) {
-                val receiver = expression.receiverExpression.toFirExpression("Incorrect receiver expression")
+                var receiver = expression.receiverExpression.toFirExpression("Incorrect receiver expression")
 
                 if (expression is KtSafeQualifiedExpression) {
                     @OptIn(FirImplementationDetail::class)
@@ -2366,6 +2366,12 @@ open class RawFirBuilder(
                         receiver,
                         expression.toFirSourceElement()
                     )
+                }
+
+                if (expression is KtHashQualifiedExpression) {
+                    receiver = buildSyntheticsAccessorExpression {
+                        delegate = receiver
+                    }
                 }
 
                 return convertFirSelector(firSelector, expression.toFirSourceElement(), receiver)
