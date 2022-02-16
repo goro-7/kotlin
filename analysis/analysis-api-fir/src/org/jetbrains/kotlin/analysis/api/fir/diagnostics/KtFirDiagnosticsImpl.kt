@@ -93,6 +93,12 @@ internal class UnsupportedImpl(
     override val token: ValidityToken,
 ) : KtFirDiagnostic.Unsupported(), KtAbstractFirDiagnostic<PsiElement>
 
+internal class UnsupportedWarningImpl(
+    override val unsupported: String,
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.UnsupportedWarning(), KtAbstractFirDiagnostic<PsiElement>
+
 internal class UnsupportedFeatureImpl(
     override val unsupportedFeature: Pair<LanguageFeature, LanguageVersionSettings>,
     override val firDiagnostic: KtPsiDiagnostic,

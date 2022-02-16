@@ -79,6 +79,13 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.UNSUPPORTED_WARNING) { firDiagnostic ->
+        UnsupportedWarningImpl(
+            firDiagnostic.a,
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.UNSUPPORTED_FEATURE) { firDiagnostic ->
         UnsupportedFeatureImpl(
             firDiagnostic.a,

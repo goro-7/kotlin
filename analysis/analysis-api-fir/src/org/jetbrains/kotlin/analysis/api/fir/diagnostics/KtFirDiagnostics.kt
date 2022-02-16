@@ -92,6 +92,11 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         abstract val unsupported: String
     }
 
+    abstract class UnsupportedWarning : KtFirDiagnostic<PsiElement>() {
+        override val diagnosticClass get() = UnsupportedWarning::class
+        abstract val unsupported: String
+    }
+
     abstract class UnsupportedFeature : KtFirDiagnostic<PsiElement>() {
         override val diagnosticClass get() = UnsupportedFeature::class
         abstract val unsupportedFeature: Pair<LanguageFeature, LanguageVersionSettings>
