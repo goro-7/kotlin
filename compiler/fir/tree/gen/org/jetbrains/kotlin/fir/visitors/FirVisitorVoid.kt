@@ -90,6 +90,7 @@ import org.jetbrains.kotlin.fir.declarations.FirErrorFunction
 import org.jetbrains.kotlin.fir.declarations.FirErrorProperty
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccessExpression
 import org.jetbrains.kotlin.fir.expressions.FirPropertyAccessExpression
+import org.jetbrains.kotlin.fir.expressions.FirSyntheticsAccessorExpression
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
 import org.jetbrains.kotlin.fir.expressions.FirIntegerLiteralOperatorCall
 import org.jetbrains.kotlin.fir.expressions.FirImplicitInvokeCall
@@ -486,6 +487,10 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
 
     open fun visitPropertyAccessExpression(propertyAccessExpression: FirPropertyAccessExpression) {
         visitElement(propertyAccessExpression)
+    }
+
+    open fun visitSyntheticsAccessorExpression(syntheticsAccessorExpression: FirSyntheticsAccessorExpression) {
+        visitElement(syntheticsAccessorExpression)
     }
 
     open fun visitFunctionCall(functionCall: FirFunctionCall) {
@@ -1038,6 +1043,10 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
 
     final override fun visitPropertyAccessExpression(propertyAccessExpression: FirPropertyAccessExpression, data: Nothing?) {
         visitPropertyAccessExpression(propertyAccessExpression)
+    }
+
+    final override fun visitSyntheticsAccessorExpression(syntheticsAccessorExpression: FirSyntheticsAccessorExpression, data: Nothing?) {
+        visitSyntheticsAccessorExpression(syntheticsAccessorExpression)
     }
 
     final override fun visitFunctionCall(functionCall: FirFunctionCall, data: Nothing?) {

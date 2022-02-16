@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.fir.tree.generator
 import org.jetbrains.kotlin.fir.tree.generator.context.AbstractFirTreeImplementationConfigurator
 import org.jetbrains.kotlin.fir.tree.generator.model.Implementation.Kind.Object
 import org.jetbrains.kotlin.fir.tree.generator.model.Implementation.Kind.OpenClass
-import org.jetbrains.kotlin.fir.tree.generator.model.Type
 
 object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() {
     fun configureImplementations() {
@@ -188,6 +187,21 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
 
         impl(propertyAccessExpression) {
             publicImplementation()
+        }
+
+        impl(syntheticsAccessorExpression) {
+            default("typeRef") {
+                value = "delegate.typeRef"
+                withGetter = true
+            }
+            default("source") {
+                value = "delegate.source"
+                withGetter = true
+            }
+            default("annotations") {
+                value = "delegate.annotations"
+                withGetter = true
+            }
         }
 
         noImpl(expressionWithSmartcast)

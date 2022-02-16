@@ -90,6 +90,7 @@ import org.jetbrains.kotlin.fir.declarations.FirErrorFunction
 import org.jetbrains.kotlin.fir.declarations.FirErrorProperty
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccessExpression
 import org.jetbrains.kotlin.fir.expressions.FirPropertyAccessExpression
+import org.jetbrains.kotlin.fir.expressions.FirSyntheticsAccessorExpression
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
 import org.jetbrains.kotlin.fir.expressions.FirIntegerLiteralOperatorCall
 import org.jetbrains.kotlin.fir.expressions.FirImplicitInvokeCall
@@ -213,6 +214,8 @@ abstract class FirDefaultVisitor<out R, in D> : FirVisitor<R, D>() {
     override fun visitClassReferenceExpression(classReferenceExpression: FirClassReferenceExpression, data: D): R  = visitExpression(classReferenceExpression, data)
 
     override fun visitPropertyAccessExpression(propertyAccessExpression: FirPropertyAccessExpression, data: D): R  = visitQualifiedAccessExpression(propertyAccessExpression, data)
+
+    override fun visitSyntheticsAccessorExpression(syntheticsAccessorExpression: FirSyntheticsAccessorExpression, data: D): R  = visitExpression(syntheticsAccessorExpression, data)
 
     override fun visitIntegerLiteralOperatorCall(integerLiteralOperatorCall: FirIntegerLiteralOperatorCall, data: D): R  = visitFunctionCall(integerLiteralOperatorCall, data)
 

@@ -196,6 +196,10 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
             +fieldList("nonFatalDiagnostics", coneDiagnosticType)
         }
 
+        syntheticsAccessorExpression.configure {
+            +field("delegate", expression)
+        }
+
         constExpression.configure {
             withArg("T")
             +field("kind", constKindType.withArgs("T"), withReplace = true)

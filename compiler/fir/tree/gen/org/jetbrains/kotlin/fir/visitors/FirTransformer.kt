@@ -90,6 +90,7 @@ import org.jetbrains.kotlin.fir.declarations.FirErrorFunction
 import org.jetbrains.kotlin.fir.declarations.FirErrorProperty
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccessExpression
 import org.jetbrains.kotlin.fir.expressions.FirPropertyAccessExpression
+import org.jetbrains.kotlin.fir.expressions.FirSyntheticsAccessorExpression
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
 import org.jetbrains.kotlin.fir.expressions.FirIntegerLiteralOperatorCall
 import org.jetbrains.kotlin.fir.expressions.FirImplicitInvokeCall
@@ -487,6 +488,10 @@ abstract class FirTransformer<in D> : FirVisitor<FirElement, D>() {
 
     open fun transformPropertyAccessExpression(propertyAccessExpression: FirPropertyAccessExpression, data: D): FirStatement {
         return transformElement(propertyAccessExpression, data)
+    }
+
+    open fun transformSyntheticsAccessorExpression(syntheticsAccessorExpression: FirSyntheticsAccessorExpression, data: D): FirStatement {
+        return transformElement(syntheticsAccessorExpression, data)
     }
 
     open fun transformFunctionCall(functionCall: FirFunctionCall, data: D): FirStatement {
@@ -1039,6 +1044,10 @@ abstract class FirTransformer<in D> : FirVisitor<FirElement, D>() {
 
     final override fun visitPropertyAccessExpression(propertyAccessExpression: FirPropertyAccessExpression, data: D): FirStatement {
         return transformPropertyAccessExpression(propertyAccessExpression, data)
+    }
+
+    final override fun visitSyntheticsAccessorExpression(syntheticsAccessorExpression: FirSyntheticsAccessorExpression, data: D): FirStatement {
+        return transformSyntheticsAccessorExpression(syntheticsAccessorExpression, data)
     }
 
     final override fun visitFunctionCall(functionCall: FirFunctionCall, data: D): FirStatement {
