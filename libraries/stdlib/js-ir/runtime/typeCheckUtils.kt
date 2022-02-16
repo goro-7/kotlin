@@ -59,7 +59,7 @@ private fun createMetadata(
     fastPrototype: fastPrototype,
     ${'$'}kClass$: undefined,
     interfacesCache: {
-       isComplete: interfaces === undefined || interfaces.length === 0,
+       isComplete: fastPrototype === undefined && (interfaces === undefined || interfaces.length === 0),
        implementInterfaceMemo: {}
     }
 })""")
