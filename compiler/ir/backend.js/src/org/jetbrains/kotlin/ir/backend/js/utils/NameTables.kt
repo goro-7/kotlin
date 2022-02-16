@@ -154,14 +154,10 @@ fun jsFunctionSignature(declaration: IrFunction, context: JsIrBackendContext): S
     val signature = nameBuilder.toString()
 
     // TODO: Use better hashCode
-    val result = sanitizeName(
+    return sanitizeName(
         declarationName,
         withHash = false
     ) + "_" + abs(signature.hashCode()).toString(Character.MAX_RADIX) + RESERVED_MEMBER_NAME_SUFFIX
-
-    return if (context.minimizedNameGenerator.enabled) {
-        context.minimizedNameGenerator.nameBySignature(result)
-    } else result
 }
 
 class NameTables(

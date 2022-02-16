@@ -5,13 +5,9 @@
 
 package org.jetbrains.kotlin.ir.backend.js.utils
 
-import org.jetbrains.kotlin.ir.declarations.IrClass
-import org.jetbrains.kotlin.ir.declarations.IrField
-
 class MinimizedNameGenerator(val enabled: Boolean) {
     private var index = 0
     private val functionSignatureToName = mutableMapOf<String, String>()
-    private val fieldDataCache = mutableMapOf<IrClass, Map<IrField, String>>()
 
     fun generateNextName(): String {
         return index++.toJsIdentifier()
