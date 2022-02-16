@@ -1,0 +1,32 @@
+FILE: commonUseCases.kt
+    public final class A : R|kotlin/Any| {
+        public constructor(): R|A| {
+            super<R|kotlin/Any|>()
+        }
+
+        public final var number: R|kotlin/String|
+            private <explicit backing field>: R|kotlin/Int| = Int(10)
+            public get(): R|kotlin/String| {
+                ^ this@R|/A|.F|/A.number|.R|kotlin/Any.toString|()
+            }
+            public set(newValue: R|kotlin/String|): R|kotlin/Unit| {
+                this@R|/A|.F|/A.number| = R|<local>/newValue|
+            }
+
+        public final fun updateNumber(): R|kotlin/Unit| {
+            this@R|/A|.R|/A.number|
+        }
+
+        public final fun represent(): R|kotlin/String| {
+            ^represent String(field = ).R|kotlin/String.plus|(this@R|/A|.R|/A.number|)
+        }
+
+    }
+    public final fun process(a: R|A|): R|kotlin/String| {
+        ^process R|java/lang/StringBuilder.StringBuilder|().<Inapplicable(INAPPLICABLE): java/lang/StringBuilder.append>#(<L> = append@fun <anonymous>(): <ERROR TYPE REF: Cannot infer type variable TypeVariable(_L)> <inline=NoInline>  {
+            <Unresolved name: append>#(<strcat>(String(a = ), R|<local>/a|, String(, length = )).R|kotlin/String.plus|(R|<local>/a|.R|/A.number|.R|kotlin/String.length|))
+            R|<local>/a|.R|/A.updateNumber|()
+            ^ <Unresolved name: append>#(<strcat>(String(a = ), R|<local>/a|, String(, length = )).R|kotlin/String.plus|(R|<local>/a|.R|/A.number|.R|kotlin/String.length|))
+        }
+        ).<Unresolved name: build>#()
+    }
