@@ -47,7 +47,6 @@ import org.jetbrains.kotlin.lexer.KtTokens.*
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.stubs.elements.KtConstantExpressionElementType
 import org.jetbrains.kotlin.psi.stubs.elements.KtNameReferenceExpressionElementType
-import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
@@ -504,11 +503,17 @@ class ExpressionsConverter(
     private fun convertQualifiedExpression(dotQualifiedExpression: LighterASTNode): FirExpression {
         var isSelector = false
         var isSafe = false
+        @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
+        var isHash = false
         var firSelector: FirExpression? = null
         var firReceiver: FirExpression? = null //before dot
         dotQualifiedExpression.forEachChildren {
             when (val tokenType = it.tokenType) {
                 DOT -> isSelector = true
+                HASH -> {
+                    isHash = true
+                    isSelector = true
+                }
                 SAFE_ACCESS -> {
                     isSafe = true
                     isSelector = true
