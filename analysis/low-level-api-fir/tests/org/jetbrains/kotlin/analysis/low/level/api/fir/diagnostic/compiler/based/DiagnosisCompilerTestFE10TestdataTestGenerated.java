@@ -28906,6 +28906,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
                 }
 
                 @Test
+                @TestMetadata("unsoundSmartcastAfterWhileLoop.kt")
+                public void testUnsoundSmartcastAfterWhileLoop() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/smartCasts/loops/unsoundSmartcastAfterWhileLoop.kt");
+                }
+
+                @Test
                 @TestMetadata("useInsideDoWhile.kt")
                 public void testUseInsideDoWhile() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/smartCasts/loops/useInsideDoWhile.kt");
