@@ -25,6 +25,37 @@ class PatternTest {
     fun assertTrue(msg: String, value: Boolean) = assertTrue(value, msg)
     fun assertFalse(msg: String, value: Boolean) = assertFalse(value, msg)
 
+    private fun String.asEscapeSeq() = buildString {
+        this@asEscapeSeq.forEach {
+            when {
+                it.isLetterOrDigit() -> append(it)
+                it == '\n' -> append("\\n")
+                it == '\r' -> append("\\r")
+                it == '\t' -> append("\\t")
+                else -> {
+                    val hexCode = it.code.toString(16)
+                    append("\\u$hexCode")
+                }
+            }
+        }
+    }
+
+    private fun assertMatch(regex: Regex, string: String) {
+        assertTrue(regex.matches(string), "Regex `$regex` expected to match string `${string.asEscapeSeq()}`")
+    }
+
+    private fun assertNoMatch(regex: Regex, string: String) {
+        assertFalse(regex.matches(string), "Regex `$regex` expected to not match string `${string.asEscapeSeq()}`")
+    }
+
+    private fun assertFind(regex: Regex, string: String, expectedRange: IntRange) {
+        assertEquals(
+            expectedRange,
+            regex.find(string)?.range,
+            "Wrong `find` result for regex `$regex` in string `${string.asEscapeSeq()}`"
+        )
+    }
+
     internal var testPatterns = arrayOf("(a|b)*abb", "(1*2*3*4*)*567", "(a|b|c|d)*aab", "(1|2|3|4|5|6|7|8|9|0)(1|2|3|4|5|6|7|8|9|0)*", "(abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ)*", "(a|b)*(a|b)*A(a|b)*lice.*", "(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z)(a|b|c|d|e|f|g|h|" + "i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z)*(1|2|3|4|5|6|7|8|9|0)*|while|for|struct|if|do", "x(?c)y", "x(?cc)y", "x(?:c)y")
 
     @Test fun testCommentsInPattern() {
@@ -1259,5 +1290,118 @@ class PatternTest {
         val result = regex.find("This is good (1), For You")
 
         assertNull(result)
+    }
+
+    @Test fun testVerticalWhitespaceChar() {
+        // From Java 8+ `Pattern` doc:
+        // \v - A vertical whitespace character: [\n\x0B\f\r\x85\u2028\u2029]
+        // \V - A non-vertical whitespace character: [^\v]
+
+        val positiveRegex = Regex("\\v")
+        val negativeRegex = Regex("\\V")
+        val verticalWhitespaces = listOf("\n", "\u000B", /* \f */ "\u000C", "\r", "\u0085", "\u2028", "\u2029")
+        val nonVerticalWhitespaces = listOf("1", "K", " ", "${Char.MIN_HIGH_SURROGATE}${Char.MIN_LOW_SURROGATE}")
+
+        verticalWhitespaces.forEach {
+            assertMatch(positiveRegex, it)
+            assertNoMatch(negativeRegex, it)
+
+            assertFind(positiveRegex, "prefix$it", 6..6)
+            assertFind(positiveRegex, "prefix${it}suffix", 6..6)
+            assertFind(positiveRegex, "${it}suffix", 0..0)
+
+            assertMatch(Regex("prefix\\v"), "prefix$it")
+            assertMatch(Regex("prefix\\vsuffix"), "prefix${it}suffix")
+            assertMatch(Regex("\\vsuffix"), "${it}suffix")
+
+            assertMatch(Regex("\\v+"), it.repeat(5))
+        }
+
+        nonVerticalWhitespaces.forEach {
+            assertNoMatch(positiveRegex, it)
+            assertMatch(negativeRegex, it)
+
+            assertFind(negativeRegex, "\n\n$it",  2 until (2 + it.length))
+            assertFind(negativeRegex, "\n\n${it}\n\n", 2 until (2 + it.length))
+            assertFind(negativeRegex, "${it}\n\n", 0 until it.length)
+
+            assertMatch(Regex("\n\n\\V"), "\n\n$it")
+            assertMatch(Regex("\n\n\\V\n\n"), "\n\n${it}\n\n")
+            assertMatch(Regex("\\V\n\n"), "${it}\n\n")
+
+            assertMatch(Regex("\\V+"), it.repeat(5))
+        }
+    }
+
+    @Test fun testHorizontalWhitespaceChar() {
+        // From Java 8+ `Pattern` doc:
+        // \h - A horizontal whitespace character: [ \t\xA0\u1680\u180e\u2000-\u200a\u202f\u205f\u3000]
+        // \H - A non-horizontal whitespace character: [^\h]
+
+        val positiveRegex = Regex("\\h")
+        val negativeRegex = Regex("\\H")
+        val verticalWhitespaces = listOf(" ", "\t", "\u00A0", "\u1680", "\u180e", "\u202f", "\u205f", "\u3000") +
+                ('\u2000'..'\u200a').map(Char::toString)
+        val nonVerticalWhitespaces = listOf("1", "K", "\n", "${Char.MIN_HIGH_SURROGATE}${Char.MIN_LOW_SURROGATE}")
+
+        verticalWhitespaces.forEach {
+            assertMatch(positiveRegex, it)
+            assertNoMatch(negativeRegex, it)
+
+            assertFind(positiveRegex, "prefix$it", 6..6)
+            assertFind(positiveRegex, "prefix${it}suffix", 6..6)
+            assertFind(positiveRegex, "${it}suffix", 0..0)
+
+            assertMatch(Regex("prefix\\h"), "prefix$it")
+            assertMatch(Regex("prefix\\hsuffix"), "prefix${it}suffix")
+            assertMatch(Regex("\\hsuffix"), "${it}suffix")
+
+            assertMatch(Regex("\\h+"), it.repeat(5))
+        }
+
+        nonVerticalWhitespaces.forEach {
+            assertNoMatch(positiveRegex, it)
+            assertMatch(negativeRegex, it)
+
+            assertFind(negativeRegex, "  $it", 2 until (2 + it.length))
+            assertFind(negativeRegex, "  $it  ", 2 until (2 + it.length))
+            assertFind(negativeRegex, "$it  ", 0 until it.length)
+
+            assertMatch(Regex("  \\H"), "  $it")
+            assertMatch(Regex("  \\H  "), "  $it  ")
+            assertMatch(Regex("\\H  "), "$it  ")
+
+            assertMatch(Regex("\\H+"), it.repeat(5))
+        }
+    }
+
+    @Test fun testUnicodeLinebreakChar() {
+        // From Java 8+ `Pattern` doc:
+        // \R - Any Unicode linebreak sequence, is equivalent to \u000D\u000A|[\u000A\u000B\u000C\u000D\u0085\u2028\u2029]
+
+        val regex = Regex("\\R")
+        val linebreaks = listOf("\u000D\u000A", "\u000A", "\u000B", "\u000C", "\u000D", "\u0085", "\u2028", "\u2029")
+        val nonLinebreaks = listOf("1", "K", " ", "${Char.MIN_HIGH_SURROGATE}${Char.MIN_LOW_SURROGATE}")
+
+        linebreaks.forEach {
+            assertMatch(regex, it)
+
+            assertFind(regex, "prefix$it", 6 until (6 + it.length))
+            assertFind(regex, "prefix${it}suffix", 6 until (6 + it.length))
+            assertFind(regex, "${it}suffix", 0 until it.length)
+
+            assertMatch(Regex("prefix\\R"), "prefix$it")
+            assertMatch(Regex("prefix\\Rsuffix"), "prefix${it}suffix")
+            assertMatch(Regex("\\Rsuffix"), "${it}suffix")
+
+            assertMatch(Regex("\\R+"), it.repeat(5))
+        }
+
+        nonLinebreaks.forEach {
+            assertNoMatch(regex, it)
+        }
+
+        assertMatch(Regex("\\R\\R\\R"), "\r\r\n\n")
+        assertMatch(Regex("\\R\\R\\R\\R"), "\r\r\n\n")
     }
 }
