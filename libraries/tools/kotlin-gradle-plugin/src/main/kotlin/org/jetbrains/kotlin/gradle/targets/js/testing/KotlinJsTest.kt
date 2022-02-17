@@ -9,6 +9,7 @@ import groovy.lang.Closure
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.tasks.*
+import org.gradle.process.ProcessForkOptions
 import org.gradle.process.internal.DefaultProcessForkOptions
 import org.gradle.util.ConfigureUtil
 import org.jetbrains.kotlin.gradle.internal.testing.TCServiceMessagesTestExecutionSpec
@@ -43,6 +44,8 @@ constructor(
     private val npmProjectDir by project.provider { compilation.npmProject.dir }
 
     private val projectPath = project.path
+
+    private val forkOptions = mutableListOf<ProcessForkOptions.() -> Unit>()
 
     @get:Internal
     var testFramework: KotlinJsTestFramework? = null
@@ -133,8 +136,19 @@ constructor(
         KotlinKarma(compilation, { services }, path),
         body
     )
+
     fun useKarma(fn: Closure<*>) {
         useKarma {
+            ConfigureUtil.configure(fn, this)
+        }
+    }
+
+    fun forkOptions(body: ProcessForkOptions.() -> Unit) {
+        forkOptions.add(body)
+    }
+
+    fun forkOptions(fn: Closure<*>) {
+        forkOptions {
             ConfigureUtil.configure(fn, this)
         }
     }
@@ -159,6 +173,10 @@ constructor(
         val forkOptions = DefaultProcessForkOptions(fileResolver)
         forkOptions.workingDir = npmProjectDir
         forkOptions.executable = nodeExecutable
+
+        this.forkOptions.forEach {
+            forkOptions.it()
+        }
 
         val nodeJsArgs = mutableListOf<String>()
 
