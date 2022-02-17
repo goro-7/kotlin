@@ -1,0 +1,5 @@
+FILE: stringConstructors.kt
+    public final val sRef: R|kotlin/reflect/KFunction0<kotlin/String>| = ::R|kotlin/String.String|
+        public get(): R|kotlin/reflect/KFunction0<kotlin/String>|
+    public final val s: R|java/lang/String| = R|java/lang/String.String|(R|kotlin/byteArrayOf|(vararg(Byte(1), Byte(2), Byte(3))), Int(4), Int(5), Int(6))
+        public get(): R|java/lang/String|
