@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.resolve.transformers.body.resolve
 
+import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.fir.FirTargetElement
 import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
@@ -12,13 +13,12 @@ import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.impl.FirElseIfTrueCondition
 import org.jetbrains.kotlin.fir.expressions.impl.FirEmptyExpressionBlock
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
-import org.jetbrains.kotlin.fir.resolve.ResolutionMode
+import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.resolve.calls.isUnitOrFlexibleUnit
-import org.jetbrains.kotlin.fir.resolve.transformWhenSubjectExpressionUsingSmartcastInfo
 import org.jetbrains.kotlin.fir.resolve.transformers.FirSyntheticCallGenerator
 import org.jetbrains.kotlin.fir.resolve.transformers.FirWhenExhaustivenessTransformer
-import org.jetbrains.kotlin.fir.resolve.withExpectedType
 import org.jetbrains.kotlin.fir.resolvedTypeFromPrototype
+import org.jetbrains.kotlin.fir.scopes.impl.FirUnqualifiedEnumImportingScope
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.builder.buildErrorTypeRef
 import org.jetbrains.kotlin.fir.visitors.transformSingle
@@ -65,33 +65,35 @@ class FirControlFlowStatementsResolveTransformer(transformer: FirBodyResolveTran
         return context.withWhenExpression(whenExpression, session) with@{
             @Suppress("NAME_SHADOWING")
             var whenExpression = whenExpression.transformSubject(transformer, ResolutionMode.ContextIndependent)
-
-            when {
-                whenExpression.branches.isEmpty() -> {}
-                whenExpression.isOneBranch() -> {
-                    whenExpression = whenExpression.transformBranches(transformer, ResolutionMode.ContextIndependent)
-                    whenExpression.resultType = whenExpression.branches.first().result.resultType
-                }
-                else -> {
-                    whenExpression = whenExpression.transformBranches(transformer, ResolutionMode.ContextDependent)
-
-                    whenExpression = syntheticCallGenerator.generateCalleeForWhenExpression(whenExpression, resolutionContext) ?: run {
-                        whenExpression = whenExpression.transformSingle(whenExhaustivenessTransformer, null)
-                        dataFlowAnalyzer.exitWhenExpression(whenExpression)
-                        whenExpression.resultType = buildErrorTypeRef {
-                            diagnostic = ConeSimpleDiagnostic("Can't resolve when expression", DiagnosticKind.InferenceError)
-                        }
-                        return@with whenExpression
+            val subjectType = whenExpression.subject?.typeRef?.coneType?.fullyExpandedType(session)
+            context.withUnqualifiedEnumImportingScope(subjectType, components) {
+                when {
+                    whenExpression.branches.isEmpty() -> {}
+                    whenExpression.isOneBranch() -> {
+                        whenExpression = whenExpression.transformBranches(transformer, ResolutionMode.ContextIndependent)
+                        whenExpression.resultType = whenExpression.branches.first().result.resultType
                     }
+                    else -> {
+                        whenExpression = whenExpression.transformBranches(transformer, ResolutionMode.ContextDependent)
 
-                    val completionResult = callCompleter.completeCall(whenExpression, data)
-                    whenExpression = completionResult.result
+                        whenExpression = syntheticCallGenerator.generateCalleeForWhenExpression(whenExpression, resolutionContext) ?: run {
+                            whenExpression = whenExpression.transformSingle(whenExhaustivenessTransformer, null)
+                            dataFlowAnalyzer.exitWhenExpression(whenExpression)
+                            whenExpression.resultType = buildErrorTypeRef {
+                                diagnostic = ConeSimpleDiagnostic("Can't resolve when expression", DiagnosticKind.InferenceError)
+                            }
+                            return@withUnqualifiedEnumImportingScope whenExpression
+                        }
+
+                        val completionResult = callCompleter.completeCall(whenExpression, data)
+                        whenExpression = completionResult.result
+                    }
                 }
+                whenExpression = whenExpression.transformSingle(whenExhaustivenessTransformer, null)
+                dataFlowAnalyzer.exitWhenExpression(whenExpression)
+                whenExpression = whenExpression.replaceReturnTypeIfNotExhaustive()
+                whenExpression
             }
-            whenExpression = whenExpression.transformSingle(whenExhaustivenessTransformer, null)
-            dataFlowAnalyzer.exitWhenExpression(whenExpression)
-            whenExpression = whenExpression.replaceReturnTypeIfNotExhaustive()
-            whenExpression
         }
     }
 

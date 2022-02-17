@@ -33,9 +33,11 @@ import org.jetbrains.kotlin.fir.scopes.FirScope
 import org.jetbrains.kotlin.fir.scopes.createImportingScopes
 import org.jetbrains.kotlin.fir.scopes.impl.FirLocalScope
 import org.jetbrains.kotlin.fir.scopes.impl.FirMemberTypeParameterScope
+import org.jetbrains.kotlin.fir.scopes.impl.FirUnqualifiedEnumImportingScope
 import org.jetbrains.kotlin.fir.symbols.impl.FirAnonymousFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirFunctionSymbol
+import org.jetbrains.kotlin.fir.types.ConeClassLikeType
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.fir.types.FirImplicitTypeRef
 import org.jetbrains.kotlin.fir.types.coneType
@@ -485,6 +487,24 @@ class BodyResolveContext(
             primaryConstructorAllParametersScope
         )
 
+        return withNewTowerDataForClass(newContexts) {
+            f()
+        }
+    }
+
+    fun <T> withUnqualifiedEnumImportingScope(
+        subjectType: ConeKotlinType?,
+        sessionHolder: SessionHolder,
+        f: () -> T
+    ): T {
+        if (subjectType !is ConeClassLikeType) return f()
+        val session = sessionHolder.session
+        val subjectClassSymbol = subjectType.lookupTag.toFirRegularClassSymbol(session)
+        if (subjectClassSymbol?.fir?.classKind != ClassKind.ENUM_CLASS) return f()
+        val newTowerDataContext = towerDataContext.addNonLocalScope(
+            FirUnqualifiedEnumImportingScope(subjectClassSymbol.classId, session, sessionHolder.scopeSession)
+        )
+        val newContexts = FirRegularTowerDataContexts(newTowerDataContext)
         return withNewTowerDataForClass(newContexts) {
             f()
         }

@@ -4123,6 +4123,34 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
         }
 
         @Nested
+        @TestMetadata("compiler/fir/analysis-tests/testData/resolve/unqualifiedEnum")
+        @TestDataPath("$PROJECT_ROOT")
+        public class UnqualifiedEnum {
+            @Test
+            public void testAllFilesPresentInUnqualifiedEnum() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/unqualifiedEnum"), Pattern.compile("^([^.]+)\\.kt$"), null, true);
+            }
+
+            @Test
+            @TestMetadata("nested.kt")
+            public void testNested() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/unqualifiedEnum/nested.kt");
+            }
+
+            @Test
+            @TestMetadata("priority.kt")
+            public void testPriority() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/unqualifiedEnum/priority.kt");
+            }
+
+            @Test
+            @TestMetadata("unqualifiedEnum.kt")
+            public void testUnqualifiedEnum() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/unqualifiedEnum/unqualifiedEnum.kt");
+            }
+        }
+
+        @Nested
         @TestMetadata("compiler/fir/analysis-tests/testData/resolve/visibility")
         @TestDataPath("$PROJECT_ROOT")
         public class Visibility {
