@@ -9,6 +9,7 @@ import org.gradle.api.internal.tasks.testing.TestExecuter
 import org.gradle.api.internal.tasks.testing.TestExecutionSpec
 import org.gradle.api.internal.tasks.testing.TestResultProcessor
 import org.gradle.internal.operations.BuildOperationExecutor
+import org.gradle.internal.operations.OperationIdentifier
 import org.gradle.process.ExecResult
 import org.gradle.process.ProcessForkOptions
 import org.gradle.process.internal.ExecHandle
@@ -20,7 +21,8 @@ open class TCServiceMessagesTestExecutionSpec(
     val forkOptions: ProcessForkOptions,
     val args: List<String>,
     val checkExitCode: Boolean,
-    val clientSettings: TCServiceMessagesClientSettings
+    val clientSettings: TCServiceMessagesClientSettings,
+    val dryRunArg: String? = null,
 ) : TestExecutionSpec {
     internal open fun createClient(testResultProcessor: TestResultProcessor, log: Logger): TCServiceMessagesClient =
         TCServiceMessagesClient(testResultProcessor, clientSettings, log)
@@ -49,32 +51,11 @@ class TCServiceMessagesTestExecutor(
             val client = spec.createClient(testResultProcessor, log)
 
             try {
-                val exec = execHandleFactory.newExec()
-                spec.forkOptions.copyTo(exec)
-                exec.args = spec.args
-                exec.standardOutput = TCServiceMessageOutputStreamHandler(
-                    client,
-                    { spec.showSuppressedOutput() },
-                    log,
-                    ignoreTcsmOverflow
-                )
-                exec.errorOutput = TCServiceMessageOutputStreamHandler(
-                    client,
-                    { spec.showSuppressedOutput() },
-                    log,
-                    ignoreTcsmOverflow
-                )
-                execHandle = exec.build()
-
-                lateinit var result: ExecResult
-                client.root(rootOperation) {
-                    execHandle.start()
-                    result = execHandle.waitForFinish()
+                if (spec.dryRunArg != null) {
+                    exec(spec, client, rootOperation, spec.dryRunArg)
                 }
 
-                if (spec.checkExitCode && result.exitValue != 0) {
-                    error(client.testFailedMessage(execHandle, result.exitValue))
-                }
+                exec(spec, client, rootOperation)
             } catch (e: Throwable) {
                 spec.showSuppressedOutput()
 
@@ -90,6 +71,41 @@ class TCServiceMessagesTestExecutor(
                     throw e
                 }
             }
+        }
+    }
+
+    private fun exec(
+        spec: TCServiceMessagesTestExecutionSpec,
+        client: TCServiceMessagesClient,
+        rootOperation: OperationIdentifier,
+        dryRunArg: String? = null,
+    ) {
+        val exec = execHandleFactory.newExec()
+        spec.forkOptions.copyTo(exec)
+        exec.args = spec.args
+        exec.standardOutput = TCServiceMessageOutputStreamHandler(
+            client,
+            { spec.showSuppressedOutput() },
+            log,
+            ignoreTcsmOverflow
+        )
+        exec.errorOutput = TCServiceMessageOutputStreamHandler(
+            client,
+            { spec.showSuppressedOutput() },
+            log,
+            ignoreTcsmOverflow
+        )
+        execHandle = exec.build()
+        dryRunArg?.let { exec.args = spec.args + it }
+
+        lateinit var result: ExecResult
+        client.root(rootOperation) {
+            execHandle.start()
+            result = execHandle.waitForFinish()
+        }
+
+        if ((dryRunArg != null || spec.checkExitCode) && result.exitValue != 0) {
+            error(client.testFailedMessage(execHandle, result.exitValue))
         }
     }
 

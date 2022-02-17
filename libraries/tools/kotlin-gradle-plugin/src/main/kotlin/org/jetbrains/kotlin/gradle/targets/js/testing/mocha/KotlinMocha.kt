@@ -106,7 +106,8 @@ class KotlinMocha(@Transient override val compilation: KotlinJsCompilation, priv
             forkOptions,
             args,
             false,
-            clientSettings
+            clientSettings,
+            "--dry-run"
         )
     }
 
