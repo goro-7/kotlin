@@ -104,6 +104,7 @@ TEST(ClockInternalTest, WaitUntilViaFor_Int_Timeout) {
         EXPECT_CALL(waitForF, Call(step)).WillOnce(testing::Return(timeoutValue));
         EXPECT_CALL(nowF, Call()).WillOnce(testing::Return(TimePoint() + step + step));
         EXPECT_CALL(waitForF, Call(rest)).WillOnce(testing::Return(timeoutValue));
+        EXPECT_CALL(nowF, Call()).WillOnce(testing::Return(TimePoint() + step + step + rest));
     }
     auto result = internal::waitUntilViaFor(nowF.AsStdFunction(), step, until, timeoutValue, [&](auto interval) {
         return waitForF.Call(std::chrono::duration_cast<std::chrono::seconds>(interval));
@@ -152,6 +153,37 @@ TEST(ClockInternalTest, WaitUntilViaFor_Int_ClockJumpTimeout) {
     EXPECT_THAT(result, timeoutValue);
 }
 
+TEST(ClockInternalTest, WaitUntilViaFor_Int_NonconformantWaitTimeout) {
+    using TimePoint = std::chrono::time_point<test_support::manual_clock>;
+    testing::StrictMock<testing::MockFunction<TimePoint()>> nowF;
+    constexpr auto step = std::chrono::seconds(10);
+    // waitFor non-conformingly waits less than specified.
+    constexpr auto actualStep = std::chrono::seconds(7);
+    constexpr auto rest = std::chrono::seconds(3);
+    constexpr auto until = TimePoint() + step + step + rest;
+    constexpr int timeoutValue = 42;
+    testing::StrictMock<testing::MockFunction<int(std::chrono::seconds)>> waitForF;
+
+    {
+        testing::InSequence s;
+        EXPECT_CALL(nowF, Call()).WillOnce(testing::Return(TimePoint()));
+        EXPECT_CALL(waitForF, Call(step)).WillOnce(testing::Return(timeoutValue));
+        EXPECT_CALL(nowF, Call()).WillOnce(testing::Return(TimePoint() + actualStep));
+        EXPECT_CALL(waitForF, Call(step)).WillOnce(testing::Return(timeoutValue));
+        EXPECT_CALL(nowF, Call()).WillOnce(testing::Return(TimePoint() + actualStep + actualStep));
+        // Waited 2 * 7 out of 2 * 10 + 3 seconds. 9 seconds left. Will wait only 6 seconds.
+        EXPECT_CALL(waitForF, Call(std::chrono::seconds(9))).WillOnce(testing::Return(timeoutValue));
+        EXPECT_CALL(nowF, Call()).WillOnce(testing::Return(TimePoint() + actualStep + actualStep + std::chrono::seconds(6)));
+        EXPECT_CALL(waitForF, Call(std::chrono::seconds(3))).WillOnce(testing::Return(timeoutValue));
+        // Finally waited enough.
+        EXPECT_CALL(nowF, Call()).WillOnce(testing::Return(TimePoint() + actualStep + actualStep + std::chrono::seconds(9)));
+    }
+    auto result = internal::waitUntilViaFor(nowF.AsStdFunction(), step, until, timeoutValue, [&](auto interval) {
+        return waitForF.Call(std::chrono::duration_cast<std::chrono::seconds>(interval));
+    });
+    EXPECT_THAT(result, timeoutValue);
+}
+
 TEST(ClockInternalTest, WaitUntilViaFor_Void_Timeout) {
     using TimePoint = std::chrono::time_point<test_support::manual_clock>;
     testing::StrictMock<testing::MockFunction<TimePoint()>> nowF;
@@ -168,6 +200,7 @@ TEST(ClockInternalTest, WaitUntilViaFor_Void_Timeout) {
         EXPECT_CALL(waitForF, Call(step));
         EXPECT_CALL(nowF, Call()).WillOnce(testing::Return(TimePoint() + step + step));
         EXPECT_CALL(waitForF, Call(rest));
+        EXPECT_CALL(nowF, Call()).WillOnce(testing::Return(TimePoint() + step + step + rest));
     }
     internal::waitUntilViaFor(nowF.AsStdFunction(), step, until, [&](auto interval) {
         return waitForF.Call(std::chrono::duration_cast<std::chrono::seconds>(interval));
@@ -205,6 +238,36 @@ TEST(ClockInternalTest, WaitUntilViaFor_Void_ClockJumpTimeout) {
         EXPECT_CALL(waitForF, Call(step));
         // Instead of incrementing by `step`, the clock jumped straight to `until`.
         EXPECT_CALL(nowF, Call()).WillOnce(testing::Return(until));
+    }
+    internal::waitUntilViaFor(nowF.AsStdFunction(), step, until, [&](auto interval) {
+        return waitForF.Call(std::chrono::duration_cast<std::chrono::seconds>(interval));
+    });
+}
+
+
+TEST(ClockInternalTest, WaitUntilViaFor_Void_NonconformantWaitTimeout) {
+    using TimePoint = std::chrono::time_point<test_support::manual_clock>;
+    testing::StrictMock<testing::MockFunction<TimePoint()>> nowF;
+    constexpr auto step = std::chrono::seconds(10);
+    // waitFor non-conformingly waits less than specified.
+    constexpr auto actualStep = std::chrono::seconds(7);
+    constexpr auto rest = std::chrono::seconds(3);
+    constexpr auto until = TimePoint() + step + step + rest;
+    testing::StrictMock<testing::MockFunction<void(std::chrono::seconds)>> waitForF;
+
+    {
+        testing::InSequence s;
+        EXPECT_CALL(nowF, Call()).WillOnce(testing::Return(TimePoint()));
+        EXPECT_CALL(waitForF, Call(step));
+        EXPECT_CALL(nowF, Call()).WillOnce(testing::Return(TimePoint() + actualStep));
+        EXPECT_CALL(waitForF, Call(step));
+        EXPECT_CALL(nowF, Call()).WillOnce(testing::Return(TimePoint() + actualStep + actualStep));
+        // Waited 2 * 7 out of 2 * 10 + 3 seconds. 9 seconds left. Will wait only 6 seconds.
+        EXPECT_CALL(waitForF, Call(std::chrono::seconds(9)));
+        EXPECT_CALL(nowF, Call()).WillOnce(testing::Return(TimePoint() + actualStep + actualStep + std::chrono::seconds(6)));
+        EXPECT_CALL(waitForF, Call(std::chrono::seconds(3)));
+        // Finally waited enough.
+        EXPECT_CALL(nowF, Call()).WillOnce(testing::Return(TimePoint() + actualStep + actualStep + std::chrono::seconds(9)));
     }
     internal::waitUntilViaFor(nowF.AsStdFunction(), step, until, [&](auto interval) {
         return waitForF.Call(std::chrono::duration_cast<std::chrono::seconds>(interval));
