@@ -275,11 +275,14 @@ public class ControlStructureTypingVisitor extends ExpressionTypingVisitor {
         // In this case we must record data flow information at the nearest break / continue and
         // .and it with entrance data flow information, because while body until break is executed at least once in this case
         // See KT-6284
-        if (body != null && KtPsiUtil.isTrueConstant(condition)) {
-            // We should take data flow info from the first jump point,
-            // but without affecting changing variables
-            dataFlowInfo = dataFlowInfo.and(loopVisitor.clearDataFlowInfoForAssignedLocalVariables(bodyTypeInfo.getJumpFlowInfo(),
-                                                                                                   components.languageVersionSettings));
+        if (body != null) {
+            if (KtPsiUtil.isTrueConstant(condition)) {
+                // We should take data flow info from the first jump point,
+                // but without affecting changing variables
+                dataFlowInfo = dataFlowInfo.and(loopVisitor.clearDataFlowInfoForAssignedLocalVariables(bodyTypeInfo.getJumpFlowInfo(), components.languageVersionSettings));
+            } else {
+                dataFlowInfo = dataFlowInfo.or(loopVisitor.clearDataFlowInfoForAssignedLocalVariables(bodyTypeInfo.getDataFlowInfo(), components.languageVersionSettings));
+            }
         }
         return components.dataFlowAnalyzer
                 .checkType(bodyTypeInfo.replaceType(components.builtIns.getUnitType()), expression, contextWithExpectedType)
