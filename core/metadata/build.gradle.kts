@@ -14,3 +14,10 @@ sourceSets {
     "main" { projectDefault() }
     "test" {}
 }
+
+tasks.withType(JavaCompile::class.java) {
+    doLast {
+        println("============ Java Compile Last ==============")
+        println(targetCompatibility)
+    }
+}
